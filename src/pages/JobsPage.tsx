@@ -3,10 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import JobCard from "@/components/JobCard";
 import { MOCK_JOBS, LOCATIONS, INDUSTRIES } from "@/lib/mock-data";
+import type { Job } from "@/lib/mock-data";
+import { useJobs } from "@/hooks/useJobs";
 
 const JOB_TYPES = [
   { value: "all", label: "All Types" },
@@ -14,6 +16,25 @@ const JOB_TYPES = [
   { value: "trainee", label: "Graduate Trainee" },
   { value: "entry-level", label: "Entry Level" },
 ];
+
+const mapDbJobToMock = (dbJob: any): Job => ({
+  id: dbJob.id,
+  title: dbJob.title,
+  company: dbJob.employers?.company_name || "Unknown",
+  companyLogo: (dbJob.employers?.company_name || "?")[0],
+  location: dbJob.location || dbJob.employers?.location || "Remote",
+  type: dbJob.type || "entry-level",
+  industry: dbJob.industry || "Other",
+  skills: dbJob.required_skills || [],
+  salary: dbJob.salary_range || undefined,
+  description: dbJob.description,
+  requirements: dbJob.requirements || [],
+  responsibilities: dbJob.responsibilities || [],
+  deadline: dbJob.deadline || "",
+  postedDate: dbJob.posted_date,
+  remote: dbJob.remote || false,
+  applicants: dbJob.applicant_count || 0,
+});
 
 const JobsPage = () => {
   const [search, setSearch] = useState("");
@@ -23,8 +44,20 @@ const JobsPage = () => {
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
+  const { data: dbJobs, isLoading } = useJobs({
+    type: type !== "all" ? type : undefined,
+    industry: industry !== "all" ? industry : undefined,
+    location: location !== "all" ? location : undefined,
+    search: search || undefined,
+  });
+
+  const allJobs = useMemo(() => {
+    const liveJobs = (dbJobs || []).map(mapDbJobToMock);
+    return liveJobs.length > 0 ? liveJobs : MOCK_JOBS;
+  }, [dbJobs]);
+
   const filtered = useMemo(() => {
-    return MOCK_JOBS.filter((job) => {
+    return allJobs.filter((job) => {
       const q = search.toLowerCase();
       const matchesSearch = !q || job.title.toLowerCase().includes(q) || job.company.toLowerCase().includes(q) || job.skills.some(s => s.toLowerCase().includes(q));
       const matchesLocation = location === "all" || job.location === location;
@@ -33,7 +66,7 @@ const JobsPage = () => {
       const matchesRemote = !remoteOnly || job.remote;
       return matchesSearch && matchesLocation && matchesType && matchesIndustry && matchesRemote;
     });
-  }, [search, location, type, industry, remoteOnly]);
+  }, [search, location, type, industry, remoteOnly, allJobs]);
 
   const activeFilters = [location !== "all", type !== "all", industry !== "all", remoteOnly].filter(Boolean).length;
 
