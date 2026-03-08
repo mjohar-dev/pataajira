@@ -15,7 +15,7 @@ const AboutPage = () => (
     <div className="bg-hero-gradient text-primary-foreground">
       <div className="container py-16 md:py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
-          <h1 className="font-display text-4xl font-extrabold md:text-5xl">About GradLink Kenya</h1>
+          <h1 className="font-display text-4xl font-extrabold md:text-5xl">About PataAjira Kenya</h1>
           <p className="mt-4 text-lg text-primary-foreground/70">
             We're on a mission to bridge the gap between Kenyan graduates and meaningful employment opportunities.
           </p>
@@ -35,7 +35,7 @@ const AboutPage = () => (
         <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="font-display text-2xl font-bold text-foreground">Our Solution</h2>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            GradLink is exclusively designed for early-career talent. We partner with employers committed to developing fresh graduates and provide AI-powered tools that level the playing field. Our platform ensures every graduate has access to professional resume optimization, interview coaching, and personalized job recommendations.
+            PataAjira is exclusively designed for early-career talent. We partner with employers committed to developing fresh graduates and provide AI-powered tools that level the playing field. Our platform ensures every graduate has access to professional resume optimization, interview coaching, and personalized job recommendations. We partner with employers committed to developing fresh graduates and provide AI-powered tools that level the playing field. Our platform ensures every graduate has access to professional resume optimization, interview coaching, and personalized job recommendations.
           </p>
         </motion.div>
       </div>
@@ -67,7 +67,7 @@ const AboutPage = () => (
       <div className="mx-auto max-w-lg">
         <GraduationCap className="mx-auto h-12 w-12 text-primary" />
         <h2 className="mt-4 font-display text-3xl font-bold text-foreground">Join the Movement</h2>
-        <p className="mt-3 text-muted-foreground">Whether you're a graduate looking for your first role or an employer seeking fresh talent, GradLink is for you.</p>
+        <p className="mt-3 text-muted-foreground">Whether you're a graduate looking for your first role or an employer seeking fresh talent, PataAjira is for you.</p>
         <div className="mt-6 flex justify-center gap-4">
           <Link to="/register"><Button size="lg">Get Started <ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
           <Link to="/jobs"><Button variant="outline" size="lg">Browse Jobs</Button></Link>

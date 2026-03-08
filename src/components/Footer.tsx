@@ -11,7 +11,7 @@ const Footer = () => (
               <Briefcase className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-display text-xl font-bold">
-              Grad<span className="text-primary">Link</span>
+              Pata<span className="text-primary">Ajira</span>
             </span>
           </div>
           <p className="text-sm text-background/60">
@@ -49,7 +49,7 @@ const Footer = () => (
       </div>
 
       <div className="mt-12 border-t border-background/10 pt-6 text-center text-sm text-background/40">
-        © {new Date().getFullYear()} GradLink Kenya. Built by Mohammed Johar. All rights reserved.
+        © {new Date().getFullYear()} PataAjira Kenya. Built by Mohammed Johar. All rights reserved.
       </div>
     </div>
   </footer>

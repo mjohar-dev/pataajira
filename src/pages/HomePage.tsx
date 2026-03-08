@@ -63,7 +63,7 @@ const HeroSection = () => (
         </h1>
 
         <p className="mt-5 max-w-lg text-lg text-primary-foreground/70">
-          GradLink connects fresh graduates and final-year students with internships, graduate trainee programs, and entry-level jobs across Kenya.
+          PataAjira connects fresh graduates and final-year students with internships, graduate trainee programs, and entry-level jobs across Kenya.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-4">
@@ -188,7 +188,7 @@ const CTASection = () => (
           Ready to Launch Your Career?
         </h2>
         <p className="mx-auto mt-4 max-w-md text-primary-foreground/70">
-          Join thousands of Kenyan graduates already building their future with GradLink.
+          Join thousands of Kenyan graduates already building their future with PataAjira.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link to="/register">
