@@ -11,8 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Briefcase, BookOpen, Bell, Heart, FileText, Sparkles, Upload, Github, Clock, CheckCircle2, XCircle, Eye, Share2 } from "lucide-react";
+import { User, Briefcase, BookOpen, Bell, Heart, FileText, Sparkles, Upload, Github, Clock, CheckCircle2, XCircle, Eye, Share2, ChevronsUpDown, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 
