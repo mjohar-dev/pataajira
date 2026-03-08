@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Users, Building2, Briefcase, BarChart3, TrendingUp, Activity, Shield } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
 const CHART_COLORS = ["hsl(145, 63%, 32%)", "hsl(30, 80%, 52%)", "hsl(0, 72%, 47%)", "hsl(220, 20%, 46%)", "hsl(200, 70%, 50%)"];
@@ -18,7 +18,15 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "analytics";
+  const urlTab = searchParams.get("tab");
+  const activeTab = urlTab || sessionStorage.getItem("admin_dashboard_tab") || "analytics";
+
+  // Sync URL with sessionStorage on mount if no URL param
+  useEffect(() => {
+    if (!urlTab && activeTab !== "analytics") {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    }
+  }, []);
 
   const { data: users = [] } = useQuery({
     queryKey: ["admin-users"],
@@ -162,7 +170,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
+      <Tabs value={activeTab} onValueChange={(v) => { sessionStorage.setItem("admin_dashboard_tab", v); setSearchParams({ tab: v }); }}>
         <TabsList>
           <TabsTrigger value="analytics" className="gap-1"><Activity className="h-4 w-4" /> Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>

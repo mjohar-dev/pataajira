@@ -23,10 +23,20 @@ import { Progress } from "@/components/ui/progress";
 
 const StudentDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "profile";
+  const urlTab = searchParams.get("tab");
+  const activeTab = urlTab || sessionStorage.getItem("dashboard_tab") || "profile";
+  
   const handleTabChange = useCallback((value: string) => {
+    sessionStorage.setItem("dashboard_tab", value);
     setSearchParams({ tab: value }, { replace: false });
   }, [setSearchParams]);
+
+  // Sync URL with sessionStorage on mount if no URL param
+  useMemo(() => {
+    if (!urlTab && activeTab !== "profile") {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    }
+  }, []);
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const { profile, isLoading: profileLoading, updateProfile } = useProfile();

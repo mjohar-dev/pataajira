@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Menu, X, Bell, ArrowLeft, ArrowRight } from "lucide-react";
+import { Briefcase, Menu, X, ArrowLeft, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
