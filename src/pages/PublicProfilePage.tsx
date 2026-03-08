@@ -33,12 +33,22 @@ const PublicProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
 
   const handleResumeDownload = async (path: string) => {
-    const { data, error } = await supabase.storage.from("resumes").createSignedUrl(path, 60);
-    if (error || !data?.signedUrl) {
-      toast.error("Could not generate resume link");
+    const { data, error } = await supabase.storage.from("resumes").download(path);
+
+    if (error || !data) {
+      toast.error("Could not download resume");
       return;
     }
-    window.open(data.signedUrl, "_blank");
+
+    const fileUrl = URL.createObjectURL(data);
+    const fileName = path.split("/").pop() || "resume.pdf";
+    const link = document.createElement("a");
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(fileUrl);
   };
 
   const { data: profile, isLoading } = useQuery({
