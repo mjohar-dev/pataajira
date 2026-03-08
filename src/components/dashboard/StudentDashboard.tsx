@@ -35,8 +35,13 @@ const StudentDashboard = () => {
   const { applications } = useApplications();
   const { savedJobs } = useSavedJobs();
   const { notifications, markRead, unreadCount } = useNotifications();
-  const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState<any>({});
+  const [editMode, setEditMode] = useState(() => {
+    return sessionStorage.getItem("dashboard_editMode") === "true";
+  });
+  const [formData, setFormData] = useState<any>(() => {
+    const saved = sessionStorage.getItem("dashboard_formData");
+    return saved ? JSON.parse(saved) : {};
+  });
   const [selectedSkill, setSelectedSkill] = useState("");
   const [customSkillName, setCustomSkillName] = useState("");
   const [skillLevel, setSkillLevel] = useState("beginner");
@@ -44,16 +49,29 @@ const StudentDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Persist edit state to sessionStorage
+  const updateFormData = useCallback((data: any) => {
+    setFormData(data);
+    sessionStorage.setItem("dashboard_formData", JSON.stringify(data));
+  }, []);
+
   const handleEditProfile = () => {
-    setFormData({
+    const data = {
       first_name: profile?.first_name || "", last_name: profile?.last_name || "", bio: profile?.bio || "",
       location: profile?.location || "", phone: profile?.phone || "", university_name: profile?.university_name || "",
       graduation_year: profile?.graduation_year || "", linkedin_url: profile?.linkedin_url || "", github_url: profile?.github_url || "",
-    });
+    };
+    updateFormData(data);
     setEditMode(true);
+    sessionStorage.setItem("dashboard_editMode", "true");
   };
 
-  const handleSaveProfile = () => { updateProfile.mutate(formData); setEditMode(false); };
+  const handleSaveProfile = () => {
+    updateProfile.mutate(formData);
+    setEditMode(false);
+    sessionStorage.removeItem("dashboard_editMode");
+    sessionStorage.removeItem("dashboard_formData");
+  };
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -186,15 +204,15 @@ const StudentDashboard = () => {
             <CardContent className="space-y-4">
               {editMode ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div><Label>First Name</Label><Input value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} /></div>
-                  <div><Label>Last Name</Label><Input value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} /></div>
-                  <div><Label>Phone</Label><Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} /></div>
-                  <div><Label>Location</Label><Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} /></div>
-                  <div><Label>University</Label><Input value={formData.university_name} onChange={(e) => setFormData({ ...formData, university_name: e.target.value })} /></div>
-                  <div><Label>Graduation Year</Label><Input type="number" value={formData.graduation_year} onChange={(e) => setFormData({ ...formData, graduation_year: parseInt(e.target.value) || null })} /></div>
-                  <div><Label>LinkedIn</Label><Input value={formData.linkedin_url} onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })} /></div>
-                  <div><Label>GitHub</Label><Input value={formData.github_url} onChange={(e) => setFormData({ ...formData, github_url: e.target.value })} /></div>
-                  <div className="md:col-span-2"><Label>Bio</Label><Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} /></div>
+                  <div><Label>First Name</Label><Input value={formData.first_name} onChange={(e) => updateFormData({ ...formData, first_name: e.target.value })} /></div>
+                  <div><Label>Last Name</Label><Input value={formData.last_name} onChange={(e) => updateFormData({ ...formData, last_name: e.target.value })} /></div>
+                  <div><Label>Phone</Label><Input value={formData.phone} onChange={(e) => updateFormData({ ...formData, phone: e.target.value })} /></div>
+                  <div><Label>Location</Label><Input value={formData.location} onChange={(e) => updateFormData({ ...formData, location: e.target.value })} /></div>
+                  <div><Label>University</Label><Input value={formData.university_name} onChange={(e) => updateFormData({ ...formData, university_name: e.target.value })} /></div>
+                  <div><Label>Graduation Year</Label><Input type="number" value={formData.graduation_year} onChange={(e) => updateFormData({ ...formData, graduation_year: parseInt(e.target.value) || null })} /></div>
+                  <div><Label>LinkedIn</Label><Input value={formData.linkedin_url} onChange={(e) => updateFormData({ ...formData, linkedin_url: e.target.value })} /></div>
+                  <div><Label>GitHub</Label><Input value={formData.github_url} onChange={(e) => updateFormData({ ...formData, github_url: e.target.value })} /></div>
+                  <div className="md:col-span-2"><Label>Bio</Label><Textarea value={formData.bio} onChange={(e) => updateFormData({ ...formData, bio: e.target.value })} /></div>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
