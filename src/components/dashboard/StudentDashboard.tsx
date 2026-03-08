@@ -35,8 +35,13 @@ const StudentDashboard = () => {
   const { applications } = useApplications();
   const { savedJobs } = useSavedJobs();
   const { notifications, markRead, unreadCount } = useNotifications();
-  const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState<any>({});
+  const [editMode, setEditMode] = useState(() => {
+    return sessionStorage.getItem("dashboard_editMode") === "true";
+  });
+  const [formData, setFormData] = useState<any>(() => {
+    const saved = sessionStorage.getItem("dashboard_formData");
+    return saved ? JSON.parse(saved) : {};
+  });
   const [selectedSkill, setSelectedSkill] = useState("");
   const [customSkillName, setCustomSkillName] = useState("");
   const [skillLevel, setSkillLevel] = useState("beginner");
@@ -44,16 +49,29 @@ const StudentDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Persist edit state to sessionStorage
+  const updateFormData = useCallback((data: any) => {
+    setFormData(data);
+    sessionStorage.setItem("dashboard_formData", JSON.stringify(data));
+  }, []);
+
   const handleEditProfile = () => {
-    setFormData({
+    const data = {
       first_name: profile?.first_name || "", last_name: profile?.last_name || "", bio: profile?.bio || "",
       location: profile?.location || "", phone: profile?.phone || "", university_name: profile?.university_name || "",
       graduation_year: profile?.graduation_year || "", linkedin_url: profile?.linkedin_url || "", github_url: profile?.github_url || "",
-    });
+    };
+    updateFormData(data);
     setEditMode(true);
+    sessionStorage.setItem("dashboard_editMode", "true");
   };
 
-  const handleSaveProfile = () => { updateProfile.mutate(formData); setEditMode(false); };
+  const handleSaveProfile = () => {
+    updateProfile.mutate(formData);
+    setEditMode(false);
+    sessionStorage.removeItem("dashboard_editMode");
+    sessionStorage.removeItem("dashboard_formData");
+  };
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
