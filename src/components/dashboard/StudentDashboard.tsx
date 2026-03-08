@@ -428,19 +428,44 @@ const StudentDashboard = () => {
         </TabsContent>
 
         <TabsContent value="notifications">
+          <Card className="mb-4">
+            <CardHeader><CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-primary" /> Job Alert Settings</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-3">
+                You'll automatically receive alerts when new jobs match your <strong>skills</strong>, <strong>career interests</strong>, or <strong>location</strong>. Keep your profile updated to get the most relevant alerts!
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {userSkills.length > 0 && (
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-primary">✓ Matching {userSkills.length} skill{userSkills.length > 1 ? "s" : ""}</span>
+                )}
+                {profile?.career_interests?.length > 0 && (
+                  <span className="rounded-full bg-accent/10 px-3 py-1 text-accent">✓ {profile.career_interests.length} career interest{profile.career_interests.length > 1 ? "s" : ""}</span>
+                )}
+                {profile?.location && (
+                  <span className="rounded-full bg-secondary/10 px-3 py-1 text-secondary">✓ Location: {profile.location}</span>
+                )}
+                {userSkills.length === 0 && !profile?.location && (
+                  <span className="rounded-full bg-destructive/10 px-3 py-1 text-destructive">⚠ Add skills or update your profile to receive job alerts</span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
             <CardContent>
               {notifications.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">No notifications</p>
+                <p className="text-center py-8 text-muted-foreground">No notifications yet — you'll be alerted when matching jobs are posted!</p>
               ) : (
                 <div className="space-y-2">
                   {notifications.map((n: any) => (
-                    <div key={n.id} className={`rounded-lg border p-3 cursor-pointer ${n.is_read ? "border-border" : "border-primary/30 bg-primary/5"}`} onClick={() => !n.is_read && markRead.mutate(n.id)}>
-                      <p className="font-medium text-sm">{n.title}</p>
-                      <p className="text-sm text-muted-foreground">{n.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
-                    </div>
+                    <Link key={n.id} to={n.link || "#"} className="block">
+                      <div className={`rounded-lg border p-3 cursor-pointer transition-colors hover:bg-muted/50 ${n.is_read ? "border-border" : "border-primary/30 bg-primary/5"}`} onClick={() => !n.is_read && markRead.mutate(n.id)}>
+                        <p className="font-medium text-sm">{n.title}</p>
+                        <p className="text-sm text-muted-foreground">{n.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               )}
