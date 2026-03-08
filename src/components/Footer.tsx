@@ -41,15 +41,15 @@ const Footer = () => (
         <div>
           <h4 className="mb-4 font-display font-semibold">Contact</h4>
           <ul className="space-y-3 text-sm text-background/60">
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> hello@gradlink.co.ke</li>
-            <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> +254 700 000 000</li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> darweshmohammed17@gmail.com</li>
+            <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> 0716729803</li>
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Nairobi, Kenya</li>
           </ul>
         </div>
       </div>
 
       <div className="mt-12 border-t border-background/10 pt-6 text-center text-sm text-background/40">
-        © {new Date().getFullYear()} GradLink Kenya. All rights reserved.
+        © {new Date().getFullYear()} GradLink Kenya. Built by Mohammed Johar. All rights reserved.
       </div>
     </div>
   </footer>
