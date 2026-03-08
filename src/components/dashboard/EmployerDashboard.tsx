@@ -27,6 +27,13 @@ const EmployerDashboard = () => {
   const [rankingJobId, setRankingJobId] = useState<string | null>(null);
   const [ranking, setRanking] = useState(false);
 
+  // Sync URL with sessionStorage on mount if no URL param
+  useEffect(() => {
+    if (!urlTab && activeTab !== "jobs") {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    }
+  }, []);
+
   const { data: employer, isLoading: empLoading } = useQuery({
     queryKey: ["employer", user?.id],
     queryFn: async () => {

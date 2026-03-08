@@ -21,6 +21,13 @@ const AdminDashboard = () => {
   const urlTab = searchParams.get("tab");
   const activeTab = urlTab || sessionStorage.getItem("admin_dashboard_tab") || "analytics";
 
+  // Sync URL with sessionStorage on mount if no URL param
+  useEffect(() => {
+    if (!urlTab && activeTab !== "analytics") {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    }
+  }, []);
+
   const { data: users = [] } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
