@@ -77,7 +77,19 @@ const AdminDashboard = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-jobs"] }); toast.success("Job removed"); },
   });
 
-  // Analytics data
+  const changeRole = useMutation({
+    mutationFn: async ({ targetUserId, role }: { targetUserId: string; role: string }) => {
+      const { data, error } = await supabase.functions.invoke("admin-manage", {
+        body: { action: "assign-role", targetUserId, role },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-users"] }); toast.success("Role updated!"); },
+    onError: (e: any) => toast.error(e.message || "Failed to update role"),
+  });
+
+  //
   const roleDistribution = useMemo(() => {
     const counts: Record<string, number> = {};
     users.forEach((u: any) => {
