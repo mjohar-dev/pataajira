@@ -30,7 +30,9 @@ const StudentDashboard = () => {
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [selectedSkill, setSelectedSkill] = useState("");
+  const [customSkillName, setCustomSkillName] = useState("");
   const [skillLevel, setSkillLevel] = useState("beginner");
+  const [creatingSkill, setCreatingSkill] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
