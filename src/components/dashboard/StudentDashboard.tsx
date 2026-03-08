@@ -157,7 +157,7 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-none lg:flex">
           <TabsTrigger value="profile" className="gap-1"><User className="h-4 w-4" /> Profile</TabsTrigger>
           <TabsTrigger value="skills" className="gap-1"><BookOpen className="h-4 w-4" /> Skills</TabsTrigger>
