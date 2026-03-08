@@ -162,7 +162,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <Tabs defaultValue="analytics">
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
         <TabsList>
           <TabsTrigger value="analytics" className="gap-1"><Activity className="h-4 w-4" /> Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
