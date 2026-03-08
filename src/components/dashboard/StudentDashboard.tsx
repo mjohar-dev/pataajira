@@ -45,8 +45,21 @@ const StudentDashboard = () => {
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only PDF and DOCX files are allowed");
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error("File size must be under 5MB");
+      return;
+    }
+
     setUploading(true);
-    const path = `${user!.id}/${Date.now()}-${file.name}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${user!.id}/${Date.now()}-${safeName}`;
     const { error } = await supabase.storage.from("resumes").upload(path, file);
     if (error) { toast.error("Upload failed: " + error.message); }
     else { updateProfile.mutate({ resume_url: path }); toast.success("Resume uploaded!"); }

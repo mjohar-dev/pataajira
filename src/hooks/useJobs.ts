@@ -17,7 +17,10 @@ export const useJobs = (filters?: { type?: string; industry?: string; location?:
       if (filters?.type) query = query.eq("type", filters.type);
       if (filters?.industry) query = query.eq("industry", filters.industry);
       if (filters?.location) query = query.eq("location", filters.location);
-      if (filters?.search) query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+      if (filters?.search) {
+        const sanitized = filters.search.replace(/[%_\\]/g, '\\$&');
+        query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
