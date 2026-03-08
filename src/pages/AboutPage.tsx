@@ -15,7 +15,7 @@ const AboutPage = () => (
     <div className="bg-hero-gradient text-primary-foreground">
       <div className="container py-16 md:py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
-          <h1 className="font-display text-4xl font-extrabold md:text-5xl">About GradLink Kenya</h1>
+          <h1 className="font-display text-4xl font-extrabold md:text-5xl">About PataAjira Kenya</h1>
           <p className="mt-4 text-lg text-primary-foreground/70">
             We're on a mission to bridge the gap between Kenyan graduates and meaningful employment opportunities.
           </p>
