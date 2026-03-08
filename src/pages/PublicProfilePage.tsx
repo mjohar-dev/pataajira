@@ -32,6 +32,15 @@ const fadeUp = {
 const PublicProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
 
+  const handleResumeDownload = async (path: string) => {
+    const { data, error } = await supabase.storage.from("resumes").createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) {
+      toast.error("Could not generate resume link");
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
+  };
+
   const { data: profile, isLoading } = useQuery({
     queryKey: ["public-profile", userId],
     queryFn: async () => {
