@@ -13,6 +13,8 @@ import JobDetailPage from "@/pages/JobDetailPage";
 import AboutPage from "@/pages/AboutPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ResumeOptimizerPage from "@/pages/ai/ResumeOptimizerPage";
 import CoverLetterPage from "@/pages/ai/CoverLetterPage";
