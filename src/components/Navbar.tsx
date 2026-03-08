@@ -23,14 +23,21 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <Briefcase className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="font-display text-xl font-bold text-foreground">
-            Pata<span className="text-primary">Ajira</span>
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {!isHome && (
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Briefcase className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="font-display text-xl font-bold text-foreground">
+              Pata<span className="text-primary">Ajira</span>
+            </span>
+          </Link>
+        </div>
 
         <div className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => (
