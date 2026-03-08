@@ -20,6 +20,8 @@ const EmployerDashboard = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
   const { notifications, unreadCount } = useNotifications();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "jobs";
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const [rankingJobId, setRankingJobId] = useState<string | null>(null);
   const [ranking, setRanking] = useState(false);
