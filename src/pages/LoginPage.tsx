@@ -59,6 +59,11 @@ const LoginPage = () => {
                 </button>
               </div>
             </div>
+            <div className="flex items-center justify-between">
+              <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+                Forgot password?
+              </Link>
+            </div>
             <Button className="w-full" size="lg" type="submit" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
