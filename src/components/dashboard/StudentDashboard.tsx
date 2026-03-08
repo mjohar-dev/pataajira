@@ -75,6 +75,30 @@ const StudentDashboard = () => {
     if (!selectedSkill) return;
     addSkill.mutate({ skillId: selectedSkill, level: skillLevel });
     setSelectedSkill("");
+    setCustomSkillName("");
+  };
+
+  const handleAddCustomSkill = async () => {
+    const name = customSkillName.trim();
+    if (!name || name.length > 100) { toast.error("Enter a valid skill name (max 100 chars)"); return; }
+    setCreatingSkill(true);
+    try {
+      const { data, error } = await supabase.from("skills").insert({ name, category: "Other" }).select().single();
+      if (error) {
+        if (error.code === "23505") { toast.error("This skill already exists — search for it!"); }
+        else { toast.error(error.message); }
+        return;
+      }
+      addSkill.mutate({ skillId: data.id, level: skillLevel });
+      setCustomSkillName("");
+      setSelectedSkill("");
+      // refresh skills list
+      queryClient.invalidateQueries({ queryKey: ["all-skills"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCreatingSkill(false);
+    }
   };
 
   const statusColor = (status: string) => {
