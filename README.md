@@ -1,6 +1,6 @@
 # 🚀 PataAjira — AI-Powered Job Platform for Kenyan Graduands
 
-![PataAjira Banner](./screenshots/banner.png)
+![PataAjira Banner](./public/screenshots/banner.png)
 
 **PataAjira** is a full-stack web application designed to help Kenyan university graduands discover internships and entry-level jobs. It features AI-powered resume optimization, skill gap detection, GitHub portfolio analysis, and real-time job alerts — all in one modern platform.
 
