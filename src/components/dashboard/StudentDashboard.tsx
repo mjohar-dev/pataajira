@@ -1,0 +1,303 @@
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile, useUserSkills, useAllSkills } from "@/hooks/useProfile";
+import { useApplications, useSavedJobs, useNotifications } from "@/hooks/useJobs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { User, Briefcase, BookOpen, Bell, Heart, FileText, Sparkles, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Link } from "react-router-dom";
+
+const StudentDashboard = () => {
+  const { user, signOut } = useAuth();
+  const { profile, isLoading: profileLoading, updateProfile } = useProfile();
+  const { userSkills, addSkill, removeSkill } = useUserSkills();
+  const { data: allSkills = [] } = useAllSkills();
+  const { applications } = useApplications();
+  const { savedJobs } = useSavedJobs();
+  const { notifications, markRead, unreadCount } = useNotifications();
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<any>({});
+  const [selectedSkill, setSelectedSkill] = useState("");
+  const [skillLevel, setSkillLevel] = useState("beginner");
+  const [uploading, setUploading] = useState(false);
+
+  const handleEditProfile = () => {
+    setFormData({
+      first_name: profile?.first_name || "",
+      last_name: profile?.last_name || "",
+      bio: profile?.bio || "",
+      location: profile?.location || "",
+      phone: profile?.phone || "",
+      university_name: profile?.university_name || "",
+      graduation_year: profile?.graduation_year || "",
+      linkedin_url: profile?.linkedin_url || "",
+      github_url: profile?.github_url || "",
+    });
+    setEditMode(true);
+  };
+
+  const handleSaveProfile = () => {
+    updateProfile.mutate(formData);
+    setEditMode(false);
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const path = `${user!.id}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("resumes").upload(path, file);
+    if (error) {
+      toast.error("Upload failed: " + error.message);
+    } else {
+      const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(path);
+      updateProfile.mutate({ resume_url: path });
+      toast.success("Resume uploaded!");
+    }
+    setUploading(false);
+  };
+
+  const handleAddSkill = () => {
+    if (!selectedSkill) return;
+    addSkill.mutate({ skillId: selectedSkill, level: skillLevel });
+    setSelectedSkill("");
+  };
+
+  const statusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: "bg-muted text-muted-foreground",
+      reviewing: "bg-accent/20 text-accent-foreground",
+      shortlisted: "bg-primary/20 text-primary",
+      interview: "bg-primary/30 text-primary",
+      offered: "bg-primary text-primary-foreground",
+      rejected: "bg-destructive/20 text-destructive",
+    };
+    return colors[status] || "bg-muted text-muted-foreground";
+  };
+
+  if (profileLoading) {
+    return <div className="flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+  }
+
+  return (
+    <div className="container py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Welcome, {profile?.first_name || "Student"}</h1>
+          <p className="text-muted-foreground">Manage your career journey</p>
+        </div>
+        <Button variant="outline" onClick={signOut}>Sign Out</Button>
+      </div>
+
+      <Tabs defaultValue="profile" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-none lg:flex">
+          <TabsTrigger value="profile" className="gap-1"><User className="h-4 w-4" /> Profile</TabsTrigger>
+          <TabsTrigger value="skills" className="gap-1"><BookOpen className="h-4 w-4" /> Skills</TabsTrigger>
+          <TabsTrigger value="applications" className="gap-1"><Briefcase className="h-4 w-4" /> Applications</TabsTrigger>
+          <TabsTrigger value="saved" className="gap-1"><Heart className="h-4 w-4" /> Saved</TabsTrigger>
+          <TabsTrigger value="ai-tools" className="gap-1"><Sparkles className="h-4 w-4" /> AI Tools</TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-1 relative">
+            <Bell className="h-4 w-4" /> Alerts
+            {unreadCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">{unreadCount}</span>}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Profile Information</CardTitle>
+              {editMode ? (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Cancel</Button>
+                  <Button size="sm" onClick={handleSaveProfile}>Save</Button>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleEditProfile}>Edit Profile</Button>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {editMode ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div><Label>First Name</Label><Input value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} /></div>
+                  <div><Label>Last Name</Label><Input value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} /></div>
+                  <div><Label>Phone</Label><Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} /></div>
+                  <div><Label>Location</Label><Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} /></div>
+                  <div><Label>University</Label><Input value={formData.university_name} onChange={(e) => setFormData({ ...formData, university_name: e.target.value })} /></div>
+                  <div><Label>Graduation Year</Label><Input type="number" value={formData.graduation_year} onChange={(e) => setFormData({ ...formData, graduation_year: parseInt(e.target.value) || null })} /></div>
+                  <div><Label>LinkedIn</Label><Input value={formData.linkedin_url} onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })} /></div>
+                  <div><Label>GitHub</Label><Input value={formData.github_url} onChange={(e) => setFormData({ ...formData, github_url: e.target.value })} /></div>
+                  <div className="md:col-span-2"><Label>Bio</Label><Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} /></div>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div><p className="text-sm text-muted-foreground">Name</p><p className="font-medium">{profile?.first_name} {profile?.last_name}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Email</p><p className="font-medium">{user?.email}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Location</p><p className="font-medium">{profile?.location || "Not set"}</p></div>
+                  <div><p className="text-sm text-muted-foreground">University</p><p className="font-medium">{profile?.university_name || "Not set"}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Graduation Year</p><p className="font-medium">{profile?.graduation_year || "Not set"}</p></div>
+                  <div className="md:col-span-2"><p className="text-sm text-muted-foreground">Bio</p><p className="font-medium">{profile?.bio || "No bio yet"}</p></div>
+                </div>
+              )}
+
+              <div className="border-t border-border pt-4">
+                <Label className="flex items-center gap-2 mb-2"><Upload className="h-4 w-4" /> Resume</Label>
+                {profile?.resume_url && <p className="text-sm text-primary mb-2">✓ Resume uploaded</p>}
+                <Input type="file" accept=".pdf,.docx" onChange={handleResumeUpload} disabled={uploading} />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="skills">
+          <Card>
+            <CardHeader><CardTitle>Your Skills</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {userSkills.map((us: any) => (
+                  <Badge key={us.id} variant="secondary" className="gap-1 cursor-pointer" onClick={() => removeSkill.mutate(us.skill_id)}>
+                    {us.skills?.name} • {us.proficiency_level} ✕
+                  </Badge>
+                ))}
+                {userSkills.length === 0 && <p className="text-muted-foreground text-sm">No skills added yet</p>}
+              </div>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label>Add Skill</Label>
+                  <Select value={selectedSkill} onValueChange={setSelectedSkill}>
+                    <SelectTrigger><SelectValue placeholder="Select skill" /></SelectTrigger>
+                    <SelectContent>
+                      {allSkills.filter((s: any) => !userSkills.some((us: any) => us.skill_id === s.id)).map((s: any) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Level</Label>
+                  <Select value={skillLevel} onValueChange={setSkillLevel}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleAddSkill} disabled={!selectedSkill}>Add</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="applications">
+          <Card>
+            <CardHeader><CardTitle>Your Applications ({applications.length})</CardTitle></CardHeader>
+            <CardContent>
+              {applications.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No applications yet.</p>
+                  <Link to="/jobs"><Button className="mt-2" variant="outline">Browse Jobs</Button></Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {applications.map((app: any) => (
+                    <div key={app.id} className="flex items-center justify-between rounded-lg border border-border p-4">
+                      <div>
+                        <p className="font-medium">{app.jobs?.title}</p>
+                        <p className="text-sm text-muted-foreground">{app.jobs?.employers?.company_name}</p>
+                      </div>
+                      <Badge className={statusColor(app.status)}>{app.status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="saved">
+          <Card>
+            <CardHeader><CardTitle>Saved Jobs ({savedJobs.length})</CardTitle></CardHeader>
+            <CardContent>
+              {savedJobs.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">No saved jobs yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {savedJobs.map((sj: any) => (
+                    <Link key={sj.id} to={`/jobs/${sj.job_id}`} className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/50 transition-colors">
+                      <div>
+                        <p className="font-medium">{sj.jobs?.title}</p>
+                        <p className="text-sm text-muted-foreground">{sj.jobs?.employers?.company_name}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai-tools">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+              <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> Resume Optimizer</CardTitle></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground">Analyze your resume against job descriptions and get AI-powered improvement suggestions.</p>
+                <Link to="/ai/resume"><Button className="mt-3" size="sm">Optimize Resume</Button></Link>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+              <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Cover Letter Generator</CardTitle></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground">Generate tailored cover letters for specific job applications.</p>
+                <Link to="/ai/cover-letter"><Button className="mt-3" size="sm">Generate Letter</Button></Link>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+              <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary" /> Interview Practice</CardTitle></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground">Practice interviews with an AI chatbot and get real-time feedback.</p>
+                <Link to="/ai/interview"><Button className="mt-3" size="sm">Start Practice</Button></Link>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+              <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Skill Gap Analyzer</CardTitle></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground">Discover which skills you need to land your dream job.</p>
+                <Link to="/ai/skill-gap"><Button className="mt-3" size="sm">Analyze Skills</Button></Link>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
+            <CardContent>
+              {notifications.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">No notifications</p>
+              ) : (
+                <div className="space-y-2">
+                  {notifications.map((n: any) => (
+                    <div key={n.id} className={`rounded-lg border p-3 ${n.is_read ? "border-border" : "border-primary/30 bg-primary/5"}`} onClick={() => !n.is_read && markRead.mutate(n.id)}>
+                      <p className="font-medium text-sm">{n.title}</p>
+                      <p className="text-sm text-muted-foreground">{n.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default StudentDashboard;
