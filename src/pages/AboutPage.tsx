@@ -35,7 +35,7 @@ const AboutPage = () => (
         <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="font-display text-2xl font-bold text-foreground">Our Solution</h2>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            GradLink is exclusively designed for early-career talent. We partner with employers committed to developing fresh graduates and provide AI-powered tools that level the playing field. Our platform ensures every graduate has access to professional resume optimization, interview coaching, and personalized job recommendations.
+            PataAjira is exclusively designed for early-career talent. We partner with employers committed to developing fresh graduates and provide AI-powered tools that level the playing field. Our platform ensures every graduate has access to professional resume optimization, interview coaching, and personalized job recommendations. We partner with employers committed to developing fresh graduates and provide AI-powered tools that level the playing field. Our platform ensures every graduate has access to professional resume optimization, interview coaching, and personalized job recommendations.
           </p>
         </motion.div>
       </div>
