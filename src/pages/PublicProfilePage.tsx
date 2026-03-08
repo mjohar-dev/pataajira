@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 import {
   MapPin, GraduationCap, Github, Linkedin, Globe, Calendar,
   Code2, ExternalLink, Briefcase, Mail, Phone, Target,
