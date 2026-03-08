@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUserSkills, useAllSkills } from "@/hooks/useProfile";
 import { useApplications, useSavedJobs, useNotifications } from "@/hooks/useJobs";
