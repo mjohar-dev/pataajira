@@ -14,11 +14,16 @@ const Navbar = () => {
   const isHome = location.pathname === "/";
   const { unreadCount } = useNotifications();
 
+  const NAV_PAGES = ["/", "/jobs", "/about"];
   const NAV_LINKS = [
     { label: "Home", href: "/" },
     { label: "Find Jobs", href: "/jobs" },
     { label: "About", href: "/about" },
   ];
+
+  const currentIndex = NAV_PAGES.indexOf(location.pathname);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < NAV_PAGES.length - 1;
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -29,7 +34,7 @@ const Navbar = () => {
               <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 h-8 w-8">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => navigate(1)} className="shrink-0 h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={() => hasNext ? navigate(NAV_PAGES[currentIndex + 1]) : navigate(1)} className="shrink-0 h-8 w-8" disabled={!hasNext && currentIndex >= 0}>
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
