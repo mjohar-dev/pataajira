@@ -204,15 +204,15 @@ const StudentDashboard = () => {
             <CardContent className="space-y-4">
               {editMode ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div><Label>First Name</Label><Input value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} /></div>
-                  <div><Label>Last Name</Label><Input value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} /></div>
-                  <div><Label>Phone</Label><Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} /></div>
-                  <div><Label>Location</Label><Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} /></div>
-                  <div><Label>University</Label><Input value={formData.university_name} onChange={(e) => setFormData({ ...formData, university_name: e.target.value })} /></div>
-                  <div><Label>Graduation Year</Label><Input type="number" value={formData.graduation_year} onChange={(e) => setFormData({ ...formData, graduation_year: parseInt(e.target.value) || null })} /></div>
-                  <div><Label>LinkedIn</Label><Input value={formData.linkedin_url} onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })} /></div>
-                  <div><Label>GitHub</Label><Input value={formData.github_url} onChange={(e) => setFormData({ ...formData, github_url: e.target.value })} /></div>
-                  <div className="md:col-span-2"><Label>Bio</Label><Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} /></div>
+                  <div><Label>First Name</Label><Input value={formData.first_name} onChange={(e) => updateFormData({ ...formData, first_name: e.target.value })} /></div>
+                  <div><Label>Last Name</Label><Input value={formData.last_name} onChange={(e) => updateFormData({ ...formData, last_name: e.target.value })} /></div>
+                  <div><Label>Phone</Label><Input value={formData.phone} onChange={(e) => updateFormData({ ...formData, phone: e.target.value })} /></div>
+                  <div><Label>Location</Label><Input value={formData.location} onChange={(e) => updateFormData({ ...formData, location: e.target.value })} /></div>
+                  <div><Label>University</Label><Input value={formData.university_name} onChange={(e) => updateFormData({ ...formData, university_name: e.target.value })} /></div>
+                  <div><Label>Graduation Year</Label><Input type="number" value={formData.graduation_year} onChange={(e) => updateFormData({ ...formData, graduation_year: parseInt(e.target.value) || null })} /></div>
+                  <div><Label>LinkedIn</Label><Input value={formData.linkedin_url} onChange={(e) => updateFormData({ ...formData, linkedin_url: e.target.value })} /></div>
+                  <div><Label>GitHub</Label><Input value={formData.github_url} onChange={(e) => updateFormData({ ...formData, github_url: e.target.value })} /></div>
+                  <div className="md:col-span-2"><Label>Bio</Label><Textarea value={formData.bio} onChange={(e) => updateFormData({ ...formData, bio: e.target.value })} /></div>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
