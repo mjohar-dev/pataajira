@@ -9,7 +9,9 @@ import { useNotifications } from "@/hooks/useJobs";
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
+  const isHome = location.pathname === "/";
   const { unreadCount } = useNotifications();
 
   const NAV_LINKS = [
