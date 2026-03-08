@@ -10,12 +10,15 @@ import { toast } from "sonner";
 import { Users, Building2, Briefcase, BarChart3, TrendingUp, Activity, Shield } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 const CHART_COLORS = ["hsl(145, 63%, 32%)", "hsl(30, 80%, 52%)", "hsl(0, 72%, 47%)", "hsl(220, 20%, 46%)", "hsl(200, 70%, 50%)"];
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "analytics";
 
   const { data: users = [] } = useQuery({
     queryKey: ["admin-users"],
@@ -159,7 +162,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <Tabs defaultValue="analytics">
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
         <TabsList>
           <TabsTrigger value="analytics" className="gap-1"><Activity className="h-4 w-4" /> Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,8 @@ const EmployerDashboard = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
   const { notifications, unreadCount } = useNotifications();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "jobs";
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const [rankingJobId, setRankingJobId] = useState<string | null>(null);
   const [ranking, setRanking] = useState(false);
@@ -220,7 +223,7 @@ const EmployerDashboard = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="jobs" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-4">
         <TabsList>
           <TabsTrigger value="jobs" className="gap-1"><Briefcase className="h-4 w-4" /> Jobs ({jobs.length})</TabsTrigger>
           <TabsTrigger value="applicants" className="gap-1"><Users className="h-4 w-4" /> Applicants ({applicants.length})</TabsTrigger>
