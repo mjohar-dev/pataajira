@@ -232,7 +232,7 @@ const AdminDashboard = () => {
 
         <TabsContent value="users">
           <Card>
-            <CardHeader><CardTitle>All Users ({users.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> All Users ({users.length})</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {users.map((u: any) => (
@@ -241,8 +241,20 @@ const AdminDashboard = () => {
                       <p className="font-medium">{u.first_name} {u.last_name}</p>
                       <p className="text-sm text-muted-foreground">{u.university_name || "N/A"} • Joined {new Date(u.created_at).toLocaleDateString()}</p>
                     </div>
-                    <div className="flex gap-2">
-                      {u.user_roles?.map((r: any) => <Badge key={r.role} variant="outline">{r.role}</Badge>)}
+                    <div className="flex items-center gap-2">
+                      <Select
+                        defaultValue={u.user_roles?.[0]?.role || "student"}
+                        onValueChange={(role) => changeRole.mutate({ targetUserId: u.user_id, role })}
+                      >
+                        <SelectTrigger className="w-[120px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="student">Student</SelectItem>
+                          <SelectItem value="employer">Employer</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <a href={`/profile/${u.user_id}`} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="sm">View</Button>
                       </a>
