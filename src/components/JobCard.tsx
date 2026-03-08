@@ -32,7 +32,7 @@ const JobCard = ({ job }: { job: Job }) => {
     }
     toggleSave.mutate(job.id, {
       onSuccess: () => toast.success(saved ? "Job unsaved" : "Job saved!"),
-      onError: () => toast.error("Failed to save job"),
+      onError: (error: any) => toast.error(error?.message || "Failed to save job"),
     });
   };
 
