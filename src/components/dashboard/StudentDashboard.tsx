@@ -22,6 +22,11 @@ import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 
 const StudentDashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "profile";
+  const handleTabChange = useCallback((value: string) => {
+    setSearchParams({ tab: value }, { replace: false });
+  }, [setSearchParams]);
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const { profile, isLoading: profileLoading, updateProfile } = useProfile();
