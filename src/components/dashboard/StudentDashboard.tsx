@@ -234,9 +234,16 @@ const StudentDashboard = () => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search skills..." />
-                        <CommandEmpty>No skill found.</CommandEmpty>
+                      <Command shouldFilter={true}>
+                        <CommandInput placeholder="Search or type a new skill..." value={customSkillName} onValueChange={setCustomSkillName} />
+                        <CommandEmpty>
+                          <div className="p-2 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">"{customSkillName}" not found</p>
+                            <Button size="sm" onClick={handleAddCustomSkill} disabled={creatingSkill || !customSkillName.trim()}>
+                              {creatingSkill ? "Adding..." : `Add "${customSkillName.trim()}" as new skill`}
+                            </Button>
+                          </div>
+                        </CommandEmpty>
                         <CommandList className="max-h-[250px]">
                           {Object.entries(
                             allSkills
