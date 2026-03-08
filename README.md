@@ -186,8 +186,8 @@ The admin dashboard provides full platform management capabilities. Access is co
 | **Name** | Mohammed Johar |
 | **Email** | [darweshmohammed17@gmail.com](mailto:darweshmohammed17@gmail.com) |
 | **Phone** | 0716729803 |
-| **GitHub** | [github.com/your-username](https://github.com/your-username) |
-| **LinkedIn** | [linkedin.com/in/your-profile](https://linkedin.com/in/your-profile) |
+| **GitHub** | [github.com/mjohar-dev/](https://github.com/mjohar-dev/) |
+| **LinkedIn** | [linkedin.com/in/www.linkedin.com/in/mohammed-johar-308b96232](https://linkedin.com/in/www.linkedin.com/in/mohammed-johar-308b96232) |
 | **Portfolio** | [pataajira.lovable.app](https://pataajira.lovable.app) |
 
 ---
