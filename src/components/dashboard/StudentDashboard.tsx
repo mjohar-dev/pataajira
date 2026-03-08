@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUserSkills, useAllSkills } from "@/hooks/useProfile";
 import { useApplications, useSavedJobs, useNotifications } from "@/hooks/useJobs";
@@ -11,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Briefcase, BookOpen, Bell, Heart, FileText, Sparkles, Upload } from "lucide-react";
+import { User, Briefcase, BookOpen, Bell, Heart, FileText, Sparkles, Upload, Github, Clock, CheckCircle2, XCircle, Eye, Share2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
 
 const StudentDashboard = () => {
   const { user, signOut } = useAuth();
@@ -28,26 +29,18 @@ const StudentDashboard = () => {
   const [selectedSkill, setSelectedSkill] = useState("");
   const [skillLevel, setSkillLevel] = useState("beginner");
   const [uploading, setUploading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const handleEditProfile = () => {
     setFormData({
-      first_name: profile?.first_name || "",
-      last_name: profile?.last_name || "",
-      bio: profile?.bio || "",
-      location: profile?.location || "",
-      phone: profile?.phone || "",
-      university_name: profile?.university_name || "",
-      graduation_year: profile?.graduation_year || "",
-      linkedin_url: profile?.linkedin_url || "",
-      github_url: profile?.github_url || "",
+      first_name: profile?.first_name || "", last_name: profile?.last_name || "", bio: profile?.bio || "",
+      location: profile?.location || "", phone: profile?.phone || "", university_name: profile?.university_name || "",
+      graduation_year: profile?.graduation_year || "", linkedin_url: profile?.linkedin_url || "", github_url: profile?.github_url || "",
     });
     setEditMode(true);
   };
 
-  const handleSaveProfile = () => {
-    updateProfile.mutate(formData);
-    setEditMode(false);
-  };
+  const handleSaveProfile = () => { updateProfile.mutate(formData); setEditMode(false); };
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,13 +48,8 @@ const StudentDashboard = () => {
     setUploading(true);
     const path = `${user!.id}/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("resumes").upload(path, file);
-    if (error) {
-      toast.error("Upload failed: " + error.message);
-    } else {
-      const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(path);
-      updateProfile.mutate({ resume_url: path });
-      toast.success("Resume uploaded!");
-    }
+    if (error) { toast.error("Upload failed: " + error.message); }
+    else { updateProfile.mutate({ resume_url: path }); toast.success("Resume uploaded!"); }
     setUploading(false);
   };
 
@@ -73,15 +61,30 @@ const StudentDashboard = () => {
 
   const statusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: "bg-muted text-muted-foreground",
-      reviewing: "bg-accent/20 text-accent-foreground",
-      shortlisted: "bg-primary/20 text-primary",
-      interview: "bg-primary/30 text-primary",
-      offered: "bg-primary text-primary-foreground",
-      rejected: "bg-destructive/20 text-destructive",
+      pending: "bg-muted text-muted-foreground", reviewing: "bg-accent/20 text-accent-foreground",
+      shortlisted: "bg-primary/20 text-primary", interview: "bg-primary/30 text-primary",
+      offered: "bg-primary text-primary-foreground", rejected: "bg-destructive/20 text-destructive",
     };
     return colors[status] || "bg-muted text-muted-foreground";
   };
+
+  const statusIcon = (status: string) => {
+    if (status === "offered") return <CheckCircle2 className="h-4 w-4" />;
+    if (status === "rejected") return <XCircle className="h-4 w-4" />;
+    if (status === "interview") return <Eye className="h-4 w-4" />;
+    return <Clock className="h-4 w-4" />;
+  };
+
+  const appStats = useMemo(() => {
+    const total = applications.length;
+    const pending = applications.filter((a: any) => a.status === "pending").length;
+    const active = applications.filter((a: any) => ["reviewing", "shortlisted", "interview"].includes(a.status)).length;
+    const offered = applications.filter((a: any) => a.status === "offered").length;
+    const rejected = applications.filter((a: any) => a.status === "rejected").length;
+    return { total, pending, active, offered, rejected };
+  }, [applications]);
+
+  const filteredApps = statusFilter === "all" ? applications : applications.filter((a: any) => a.status === statusFilter);
 
   if (profileLoading) {
     return <div className="flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
@@ -94,14 +97,21 @@ const StudentDashboard = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Welcome, {profile?.first_name || "Student"}</h1>
           <p className="text-muted-foreground">Manage your career journey</p>
         </div>
-        <Button variant="outline" onClick={signOut}>Sign Out</Button>
+        <div className="flex gap-2">
+          {user && (
+            <Link to={`/profile/${user.id}`}>
+              <Button variant="outline" size="sm"><Share2 className="h-4 w-4 mr-1" /> Public Profile</Button>
+            </Link>
+          )}
+          <Button variant="outline" onClick={signOut}>Sign Out</Button>
+        </div>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-none lg:flex">
+        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-none lg:flex">
           <TabsTrigger value="profile" className="gap-1"><User className="h-4 w-4" /> Profile</TabsTrigger>
           <TabsTrigger value="skills" className="gap-1"><BookOpen className="h-4 w-4" /> Skills</TabsTrigger>
-          <TabsTrigger value="applications" className="gap-1"><Briefcase className="h-4 w-4" /> Applications</TabsTrigger>
+          <TabsTrigger value="applications" className="gap-1"><Briefcase className="h-4 w-4" /> Tracker</TabsTrigger>
           <TabsTrigger value="saved" className="gap-1"><Heart className="h-4 w-4" /> Saved</TabsTrigger>
           <TabsTrigger value="ai-tools" className="gap-1"><Sparkles className="h-4 w-4" /> AI Tools</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-1 relative">
@@ -146,7 +156,6 @@ const StudentDashboard = () => {
                   <div className="md:col-span-2"><p className="text-sm text-muted-foreground">Bio</p><p className="font-medium">{profile?.bio || "No bio yet"}</p></div>
                 </div>
               )}
-
               <div className="border-t border-border pt-4">
                 <Label className="flex items-center gap-2 mb-2"><Upload className="h-4 w-4" /> Resume</Label>
                 {profile?.resume_url && <p className="text-sm text-primary mb-2">✓ Resume uploaded</p>}
@@ -199,29 +208,80 @@ const StudentDashboard = () => {
         </TabsContent>
 
         <TabsContent value="applications">
-          <Card>
-            <CardHeader><CardTitle>Your Applications ({applications.length})</CardTitle></CardHeader>
-            <CardContent>
-              {applications.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No applications yet.</p>
-                  <Link to="/jobs"><Button className="mt-2" variant="outline">Browse Jobs</Button></Link>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {applications.map((app: any) => (
-                    <div key={app.id} className="flex items-center justify-between rounded-lg border border-border p-4">
-                      <div>
-                        <p className="font-medium">{app.jobs?.title}</p>
-                        <p className="text-sm text-muted-foreground">{app.jobs?.employers?.company_name}</p>
+          <div className="space-y-4">
+            {/* Stats */}
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
+              <Card className="cursor-pointer" onClick={() => setStatusFilter("all")}>
+                <CardContent className="py-3 text-center">
+                  <p className="text-2xl font-bold">{appStats.total}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </CardContent>
+              </Card>
+              <Card className="cursor-pointer" onClick={() => setStatusFilter("pending")}>
+                <CardContent className="py-3 text-center">
+                  <p className="text-2xl font-bold text-muted-foreground">{appStats.pending}</p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                </CardContent>
+              </Card>
+              <Card className="cursor-pointer" onClick={() => setStatusFilter("reviewing")}>
+                <CardContent className="py-3 text-center">
+                  <p className="text-2xl font-bold text-accent">{appStats.active}</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                </CardContent>
+              </Card>
+              <Card className="cursor-pointer" onClick={() => setStatusFilter("offered")}>
+                <CardContent className="py-3 text-center">
+                  <p className="text-2xl font-bold text-primary">{appStats.offered}</p>
+                  <p className="text-xs text-muted-foreground">Offered</p>
+                </CardContent>
+              </Card>
+              <Card className="cursor-pointer" onClick={() => setStatusFilter("rejected")}>
+                <CardContent className="py-3 text-center">
+                  <p className="text-2xl font-bold text-destructive">{appStats.rejected}</p>
+                  <p className="text-xs text-muted-foreground">Rejected</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {appStats.total > 0 && (
+              <Progress value={(appStats.offered / Math.max(appStats.total, 1)) * 100} className="h-2" />
+            )}
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Application Tracker ({filteredApps.length})</CardTitle>
+                {statusFilter !== "all" && <Button variant="ghost" size="sm" onClick={() => setStatusFilter("all")}>Clear filter</Button>}
+              </CardHeader>
+              <CardContent>
+                {filteredApps.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>{applications.length === 0 ? "No applications yet." : "No applications with this status."}</p>
+                    {applications.length === 0 && <Link to="/jobs"><Button className="mt-2" variant="outline">Browse Jobs</Button></Link>}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredApps.map((app: any) => (
+                      <div key={app.id} className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-full ${statusColor(app.status)}`}>
+                            {statusIcon(app.status)}
+                          </div>
+                          <div>
+                            <p className="font-medium">{app.jobs?.title}</p>
+                            <p className="text-sm text-muted-foreground">{app.jobs?.employers?.company_name} • Applied {new Date(app.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {app.match_score && <span className="text-sm font-medium text-primary">{app.match_score}%</span>}
+                          <Badge className={statusColor(app.status)}>{app.status}</Badge>
+                        </div>
                       </div>
-                      <Badge className={statusColor(app.status)}>{app.status}</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="saved">
@@ -248,28 +308,34 @@ const StudentDashboard = () => {
 
         <TabsContent value="ai-tools">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+            <Card className="hover:shadow-elevated transition-shadow">
               <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> Resume Optimizer</CardTitle></CardHeader>
               <CardContent><p className="text-sm text-muted-foreground">Analyze your resume against job descriptions and get AI-powered improvement suggestions.</p>
                 <Link to="/ai/resume"><Button className="mt-3" size="sm">Optimize Resume</Button></Link>
               </CardContent>
             </Card>
-            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+            <Card className="hover:shadow-elevated transition-shadow">
               <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Cover Letter Generator</CardTitle></CardHeader>
               <CardContent><p className="text-sm text-muted-foreground">Generate tailored cover letters for specific job applications.</p>
                 <Link to="/ai/cover-letter"><Button className="mt-3" size="sm">Generate Letter</Button></Link>
               </CardContent>
             </Card>
-            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+            <Card className="hover:shadow-elevated transition-shadow">
               <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary" /> Interview Practice</CardTitle></CardHeader>
               <CardContent><p className="text-sm text-muted-foreground">Practice interviews with an AI chatbot and get real-time feedback.</p>
                 <Link to="/ai/interview"><Button className="mt-3" size="sm">Start Practice</Button></Link>
               </CardContent>
             </Card>
-            <Card className="cursor-pointer hover:shadow-elevated transition-shadow">
+            <Card className="hover:shadow-elevated transition-shadow">
               <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Skill Gap Analyzer</CardTitle></CardHeader>
               <CardContent><p className="text-sm text-muted-foreground">Discover which skills you need to land your dream job.</p>
                 <Link to="/ai/skill-gap"><Button className="mt-3" size="sm">Analyze Skills</Button></Link>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-elevated transition-shadow">
+              <CardHeader><CardTitle className="flex items-center gap-2"><Github className="h-5 w-5 text-primary" /> GitHub Analyzer</CardTitle></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground">Analyze your GitHub portfolio and get AI insights on your tech skills.</p>
+                <Link to="/ai/github"><Button className="mt-3" size="sm">Analyze Portfolio</Button></Link>
               </CardContent>
             </Card>
           </div>
@@ -284,7 +350,7 @@ const StudentDashboard = () => {
               ) : (
                 <div className="space-y-2">
                   {notifications.map((n: any) => (
-                    <div key={n.id} className={`rounded-lg border p-3 ${n.is_read ? "border-border" : "border-primary/30 bg-primary/5"}`} onClick={() => !n.is_read && markRead.mutate(n.id)}>
+                    <div key={n.id} className={`rounded-lg border p-3 cursor-pointer ${n.is_read ? "border-border" : "border-primary/30 bg-primary/5"}`} onClick={() => !n.is_read && markRead.mutate(n.id)}>
                       <p className="font-medium text-sm">{n.title}</p>
                       <p className="text-sm text-muted-foreground">{n.message}</p>
                       <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
