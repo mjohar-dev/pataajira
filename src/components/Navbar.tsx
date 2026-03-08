@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Menu, X, Bell, ArrowLeft } from "lucide-react";
+import { Briefcase, Menu, X, Bell, ArrowLeft, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,9 +25,14 @@ const Navbar = () => {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           {!isHome && (
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center">
+              <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => navigate(1)} className="shrink-0 h-8 w-8">
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           )}
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
