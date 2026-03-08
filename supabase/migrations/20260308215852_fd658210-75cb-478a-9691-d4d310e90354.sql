@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS skills_name_unique ON public.skills (LOWER(name));

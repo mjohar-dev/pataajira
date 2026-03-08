@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUserSkills, useAllSkills } from "@/hooks/useProfile";
 import { useApplications, useSavedJobs, useNotifications } from "@/hooks/useJobs";
@@ -20,6 +21,7 @@ import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 
 const StudentDashboard = () => {
+  const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const { profile, isLoading: profileLoading, updateProfile } = useProfile();
   const { userSkills, addSkill, removeSkill } = useUserSkills();
@@ -30,7 +32,9 @@ const StudentDashboard = () => {
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [selectedSkill, setSelectedSkill] = useState("");
+  const [customSkillName, setCustomSkillName] = useState("");
   const [skillLevel, setSkillLevel] = useState("beginner");
+  const [creatingSkill, setCreatingSkill] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -73,6 +77,30 @@ const StudentDashboard = () => {
     if (!selectedSkill) return;
     addSkill.mutate({ skillId: selectedSkill, level: skillLevel });
     setSelectedSkill("");
+    setCustomSkillName("");
+  };
+
+  const handleAddCustomSkill = async () => {
+    const name = customSkillName.trim();
+    if (!name || name.length > 100) { toast.error("Enter a valid skill name (max 100 chars)"); return; }
+    setCreatingSkill(true);
+    try {
+      const { data, error } = await supabase.from("skills").insert({ name, category: "Other" }).select().single();
+      if (error) {
+        if (error.code === "23505") { toast.error("This skill already exists — search for it!"); }
+        else { toast.error(error.message); }
+        return;
+      }
+      addSkill.mutate({ skillId: data.id, level: skillLevel });
+      setCustomSkillName("");
+      setSelectedSkill("");
+      // refresh skills list
+      queryClient.invalidateQueries({ queryKey: ["all-skills"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCreatingSkill(false);
+    }
   };
 
   const statusColor = (status: string) => {
@@ -206,9 +234,16 @@ const StudentDashboard = () => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search skills..." />
-                        <CommandEmpty>No skill found.</CommandEmpty>
+                      <Command shouldFilter={true}>
+                        <CommandInput placeholder="Search or type a new skill..." value={customSkillName} onValueChange={setCustomSkillName} />
+                        <CommandEmpty>
+                          <div className="p-2 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">"{customSkillName}" not found</p>
+                            <Button size="sm" onClick={handleAddCustomSkill} disabled={creatingSkill || !customSkillName.trim()}>
+                              {creatingSkill ? "Adding..." : `Add "${customSkillName.trim()}" as new skill`}
+                            </Button>
+                          </div>
+                        </CommandEmpty>
                         <CommandList className="max-h-[250px]">
                           {Object.entries(
                             allSkills
