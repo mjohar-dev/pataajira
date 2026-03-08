@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 
 const StudentDashboard = () => {
+  const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const { profile, isLoading: profileLoading, updateProfile } = useProfile();
   const { userSkills, addSkill, removeSkill } = useUserSkills();
