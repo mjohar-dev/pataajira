@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Building2, Briefcase, Users, Bell, Plus } from "lucide-react";
+import { Building2, Briefcase, Users, Bell, Plus, Sparkles, Loader2, Trophy, ArrowUpDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useNotifications } from "@/hooks/useJobs";
 
@@ -20,8 +20,9 @@ const EmployerDashboard = () => {
   const queryClient = useQueryClient();
   const { notifications, unreadCount } = useNotifications();
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
+  const [rankingJobId, setRankingJobId] = useState<string | null>(null);
+  const [ranking, setRanking] = useState(false);
 
-  // Employer profile
   const { data: employer, isLoading: empLoading } = useQuery({
     queryKey: ["employer", user?.id],
     queryFn: async () => {
@@ -33,21 +34,16 @@ const EmployerDashboard = () => {
     enabled: !!user,
   });
 
-  // Create employer profile
   const [companyForm, setCompanyForm] = useState({ company_name: "", company_description: "", industry: "", website: "", location: "" });
   const createEmployer = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("employers").insert({ user_id: user!.id, ...companyForm });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["employer"] });
-      toast.success("Company profile created!");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["employer"] }); toast.success("Company profile created!"); },
     onError: (err: any) => toast.error(err.message),
   });
 
-  // Jobs
   const { data: jobs = [] } = useQuery({
     queryKey: ["employer-jobs", employer?.id],
     queryFn: async () => {
@@ -58,21 +54,14 @@ const EmployerDashboard = () => {
     enabled: !!employer,
   });
 
-  // Job form
   const [jobForm, setJobForm] = useState({ title: "", description: "", type: "internship", industry: "", location: "", salary_range: "", remote: false, required_skills: "", requirements: "", responsibilities: "", deadline: "" });
 
   const createJob = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("jobs").insert({
-        employer_id: employer!.id,
-        title: jobForm.title,
-        description: jobForm.description,
-        type: jobForm.type,
-        industry: jobForm.industry,
-        location: jobForm.location,
-        salary_range: jobForm.salary_range,
-        remote: jobForm.remote,
-        required_skills: jobForm.required_skills.split(",").map((s) => s.trim()).filter(Boolean),
+        employer_id: employer!.id, title: jobForm.title, description: jobForm.description, type: jobForm.type,
+        industry: jobForm.industry, location: jobForm.location, salary_range: jobForm.salary_range, remote: jobForm.remote,
+        required_skills: jobForm.required_skills.split(",").map(s => s.trim()).filter(Boolean),
         requirements: jobForm.requirements.split("\n").filter(Boolean),
         responsibilities: jobForm.responsibilities.split("\n").filter(Boolean),
         deadline: jobForm.deadline || null,
@@ -88,15 +77,14 @@ const EmployerDashboard = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
-  // Applicants
   const { data: applicants = [] } = useQuery({
-    queryKey: ["employer-applicants", employer?.id],
+    queryKey: ["employer-applicants", employer?.id, jobs],
     queryFn: async () => {
       const jobIds = jobs.map((j: any) => j.id);
       if (jobIds.length === 0) return [];
       const { data, error } = await supabase
         .from("applications")
-        .select("*, jobs(title), profiles:user_id(first_name, last_name, university_name, resume_url)")
+        .select("*, jobs(title, required_skills), profiles:user_id(first_name, last_name, university_name, resume_url, github_url, bio)")
         .in("job_id", jobIds)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -109,15 +97,59 @@ const EmployerDashboard = () => {
     mutationFn: async ({ id, status, rank }: { id: string; status?: string; rank?: number }) => {
       const updates: any = {};
       if (status) updates.status = status;
-      if (rank) updates.employer_rank = rank;
+      if (rank !== undefined) updates.employer_rank = rank;
       const { error } = await supabase.from("applications").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["employer-applicants"] });
-      toast.success("Updated!");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["employer-applicants"] }); toast.success("Updated!"); },
   });
+
+  const handleAIRank = async (jobId: string) => {
+    setRankingJobId(jobId);
+    setRanking(true);
+    const job = jobs.find((j: any) => j.id === jobId);
+    const jobApplicants = applicants.filter((a: any) => a.job_id === jobId);
+    if (jobApplicants.length === 0) { toast.error("No applicants to rank"); setRanking(false); return; }
+
+    const applicantSummaries = jobApplicants.map((a: any, i: number) => 
+      `Applicant ${i + 1} (ID: ${a.id}): ${(a as any).profiles?.first_name} ${(a as any).profiles?.last_name}, University: ${(a as any).profiles?.university_name || "N/A"}, Bio: ${(a as any).profiles?.bio || "N/A"}`
+    ).join("\n");
+
+    try {
+      const response = await supabase.functions.invoke("ai-tools", {
+        body: {
+          type: "rank-candidates",
+          jobTitle: job?.title,
+          jobSkills: job?.required_skills?.join(", ") || "",
+          applicantSummaries,
+        },
+      });
+      if (response.error) throw response.error;
+
+      // Parse rankings from AI response and update
+      const content = response.data.content;
+      const rankMatches = content.match(/Applicant \d+ \(ID: ([^)]+)\).*?Score[:\s]*(\d+)/gi);
+      if (rankMatches) {
+        for (const match of rankMatches) {
+          const idMatch = match.match(/ID: ([^)]+)/);
+          const scoreMatch = match.match(/Score[:\s]*(\d+)/i);
+          if (idMatch && scoreMatch) {
+            await supabase.from("applications").update({
+              employer_rank: parseInt(scoreMatch[1]),
+              match_score: parseInt(scoreMatch[1]),
+            }).eq("id", idMatch[1]);
+          }
+        }
+        queryClient.invalidateQueries({ queryKey: ["employer-applicants"] });
+      }
+      toast.success("Candidates ranked by AI!");
+    } catch (err: any) {
+      toast.error(err.message || "Ranking failed");
+    } finally {
+      setRanking(false);
+      setRankingJobId(null);
+    }
+  };
 
   if (empLoading) return <div className="flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
 
@@ -138,6 +170,8 @@ const EmployerDashboard = () => {
       </div>
     );
   }
+
+  const sortedApplicants = [...applicants].sort((a: any, b: any) => (b.match_score || 0) - (a.match_score || 0));
 
   return (
     <div className="container py-8 space-y-6">
@@ -190,6 +224,7 @@ const EmployerDashboard = () => {
         <TabsList>
           <TabsTrigger value="jobs" className="gap-1"><Briefcase className="h-4 w-4" /> Jobs ({jobs.length})</TabsTrigger>
           <TabsTrigger value="applicants" className="gap-1"><Users className="h-4 w-4" /> Applicants ({applicants.length})</TabsTrigger>
+          <TabsTrigger value="ranking" className="gap-1"><Trophy className="h-4 w-4" /> AI Ranking</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-1 relative"><Bell className="h-4 w-4" /> Alerts
             {unreadCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">{unreadCount}</span>}
           </TabsTrigger>
@@ -251,6 +286,55 @@ const EmployerDashboard = () => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="ranking">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5 text-accent" /> AI Candidate Ranking</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">Select a job to rank its applicants using AI based on skills, experience, and job fit.</p>
+              <div className="flex flex-wrap gap-2">
+                {jobs.map((job: any) => {
+                  const count = applicants.filter((a: any) => a.job_id === job.id).length;
+                  return (
+                    <Button key={job.id} variant={rankingJobId === job.id ? "default" : "outline"} size="sm" onClick={() => handleAIRank(job.id)}
+                      disabled={ranking || count === 0}>
+                      {ranking && rankingJobId === job.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                      {job.title} ({count})
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {sortedApplicants.filter((a: any) => a.match_score).length > 0 && (
+                <div className="space-y-2 mt-4">
+                  <h3 className="font-display font-semibold flex items-center gap-2"><ArrowUpDown className="h-4 w-4" /> Ranked Candidates</h3>
+                  {sortedApplicants.filter((a: any) => a.match_score).map((app: any, idx: number) => (
+                    <div key={app.id} className="flex items-center justify-between rounded-lg border border-border p-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`flex h-8 w-8 items-center justify-center rounded-full font-bold text-sm ${idx === 0 ? "bg-accent text-accent-foreground" : idx === 1 ? "bg-muted text-foreground" : idx === 2 ? "bg-secondary/20 text-secondary" : "bg-muted text-muted-foreground"}`}>
+                          #{idx + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium">{(app as any).profiles?.first_name} {(app as any).profiles?.last_name}</p>
+                          <p className="text-sm text-muted-foreground">{app.jobs?.title} • {(app as any).profiles?.university_name || "N/A"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-primary">{app.match_score}%</p>
+                          <p className="text-xs text-muted-foreground">AI Score</p>
+                        </div>
+                        <Badge className={app.status === "shortlisted" ? "bg-primary/20 text-primary" : ""}>{app.status}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="notifications">

@@ -18,6 +18,8 @@ import ResumeOptimizerPage from "@/pages/ai/ResumeOptimizerPage";
 import CoverLetterPage from "@/pages/ai/CoverLetterPage";
 import InterviewPracticePage from "@/pages/ai/InterviewPracticePage";
 import SkillGapPage from "@/pages/ai/SkillGapPage";
+import GitHubAnalyzerPage from "@/pages/ai/GitHubAnalyzerPage";
+import PublicProfilePage from "@/pages/PublicProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,11 +41,13 @@ const App = () => (
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/profile/:userId" element={<PublicProfilePage />} />
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/ai/resume" element={<ProtectedRoute><ResumeOptimizerPage /></ProtectedRoute>} />
                 <Route path="/ai/cover-letter" element={<ProtectedRoute><CoverLetterPage /></ProtectedRoute>} />
                 <Route path="/ai/interview" element={<ProtectedRoute><InterviewPracticePage /></ProtectedRoute>} />
                 <Route path="/ai/skill-gap" element={<ProtectedRoute><SkillGapPage /></ProtectedRoute>} />
+                <Route path="/ai/github" element={<ProtectedRoute><GitHubAnalyzerPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
