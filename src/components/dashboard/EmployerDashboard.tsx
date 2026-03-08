@@ -224,7 +224,7 @@ const EmployerDashboard = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => { sessionStorage.setItem("emp_dashboard_tab", v); setSearchParams({ tab: v }); }} className="space-y-4">
         <TabsList>
           <TabsTrigger value="jobs" className="gap-1"><Briefcase className="h-4 w-4" /> Jobs ({jobs.length})</TabsTrigger>
           <TabsTrigger value="applicants" className="gap-1"><Users className="h-4 w-4" /> Applicants ({applicants.length})</TabsTrigger>

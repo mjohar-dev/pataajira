@@ -163,7 +163,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
+      <Tabs value={activeTab} onValueChange={(v) => { sessionStorage.setItem("admin_dashboard_tab", v); setSearchParams({ tab: v }); }}>
         <TabsList>
           <TabsTrigger value="analytics" className="gap-1"><Activity className="h-4 w-4" /> Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
