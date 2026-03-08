@@ -200,9 +200,9 @@ const PublicProfilePage = () => {
                   </a>
                 )}
                 {profile.resume_url && (
-                  <a href={profile.resume_url} target="_blank" rel="noopener noreferrer">
-                    <Button variant="hero-outline" size="sm"><FileText className="h-4 w-4 mr-1.5" /> Resume</Button>
-                  </a>
+                  <Button variant="hero-outline" size="sm" onClick={() => handleResumeDownload(profile.resume_url!)}>
+                    <FileText className="h-4 w-4 mr-1.5" /> Resume
+                  </Button>
                 )}
               </div>
             </div>
