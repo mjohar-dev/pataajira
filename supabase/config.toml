@@ -2,3 +2,6 @@ project_id = "xiegmdwtycaxlhqwlnln"
 
 [functions.ai-tools]
 verify_jwt = false
+
+[functions.admin-manage]
+verify_jwt = false
