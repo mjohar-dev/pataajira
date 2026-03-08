@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Briefcase, Eye, EyeOff, GraduationCap, Building2 } from "lucide-react";
+import { Briefcase, Eye, EyeOff, GraduationCap, Building2, Check, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+
+const PasswordRequirement = ({ met, label }: { met: boolean; label: string }) => (
+  <div className="flex items-center gap-1.5 text-xs">
+    {met ? <Check className="h-3.5 w-3.5 text-green-500" /> : <X className="h-3.5 w-3.5 text-muted-foreground" />}
+    <span className={met ? "text-green-600" : "text-muted-foreground"}>{label}</span>
+  </div>
+);
 
 const RegisterPage = () => {
   const [role, setRole] = useState<"student" | "employer">("student");
@@ -22,10 +28,29 @@ const RegisterPage = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
+  const passwordChecks = useMemo(() => ({
+    minLength: password.length >= 8,
+    hasUpper: /[A-Z]/.test(password),
+    hasLower: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  }), [password]);
+
+  const passwordStrength = useMemo(() => {
+    const score = Object.values(passwordChecks).filter(Boolean).length;
+    if (score <= 1) return { label: "Weak", color: "bg-destructive", width: "w-1/5" };
+    if (score <= 2) return { label: "Fair", color: "bg-orange-500", width: "w-2/5" };
+    if (score <= 3) return { label: "Good", color: "bg-yellow-500", width: "w-3/5" };
+    if (score <= 4) return { label: "Strong", color: "bg-green-400", width: "w-4/5" };
+    return { label: "Excellent", color: "bg-green-600", width: "w-full" };
+  }, [passwordChecks]);
+
+  const allChecksPassed = Object.values(passwordChecks).every(Boolean);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+    if (!allChecksPassed) {
+      toast.error("Please meet all password requirements");
       return;
     }
     setIsLoading(true);
@@ -35,12 +60,6 @@ const RegisterPage = () => {
         last_name: lastName,
         role,
       });
-
-      // If employer, create employer record after signup
-      if (role === "employer" && company) {
-        // This will be created after email confirmation via the dashboard
-      }
-
       navigate("/login");
     } catch (err: any) {
       toast.error(err.message || "Failed to create account");
@@ -106,14 +125,32 @@ const RegisterPage = () => {
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input id="password" type={showPassword ? "text" : "password"} placeholder="Create a strong password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+
+              {password.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                      <div className={`h-full rounded-full transition-all duration-300 ${passwordStrength.color} ${passwordStrength.width}`} />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">{passwordStrength.label}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <PasswordRequirement met={passwordChecks.minLength} label="8+ characters" />
+                    <PasswordRequirement met={passwordChecks.hasUpper} label="Uppercase letter" />
+                    <PasswordRequirement met={passwordChecks.hasLower} label="Lowercase letter" />
+                    <PasswordRequirement met={passwordChecks.hasNumber} label="Number" />
+                    <PasswordRequirement met={passwordChecks.hasSpecial} label="Special character" />
+                  </div>
+                </div>
+              )}
             </div>
 
-            <Button className="w-full" size="lg" type="submit" disabled={isLoading}>
+            <Button className="w-full" size="lg" type="submit" disabled={isLoading || !allChecksPassed}>
               {isLoading ? "Creating account..." : "Create Account"}
             </Button>
           </div>
