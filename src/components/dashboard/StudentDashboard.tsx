@@ -193,14 +193,49 @@ const StudentDashboard = () => {
               <div className="flex gap-2 items-end">
                 <div className="flex-1">
                   <Label>Add Skill</Label>
-                  <Select value={selectedSkill} onValueChange={setSelectedSkill}>
-                    <SelectTrigger><SelectValue placeholder="Select skill" /></SelectTrigger>
-                    <SelectContent>
-                      {allSkills.filter((s: any) => !userSkills.some((us: any) => us.skill_id === s.id)).map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                        {selectedSkill
+                          ? allSkills.find((s: any) => s.id === selectedSkill)?.name
+                          : "Search & select skill..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search skills..." />
+                        <CommandEmpty>No skill found.</CommandEmpty>
+                        <CommandList className="max-h-[250px]">
+                          {Object.entries(
+                            allSkills
+                              .filter((s: any) => !userSkills.some((us: any) => us.skill_id === s.id))
+                              .reduce((acc: Record<string, any[]>, s: any) => {
+                                const cat = s.category || "Other";
+                                if (!acc[cat]) acc[cat] = [];
+                                acc[cat].push(s);
+                                return acc;
+                              }, {})
+                          )
+                            .sort(([a], [b]) => a.localeCompare(b))
+                            .map(([category, skills]) => (
+                              <CommandGroup key={category} heading={category}>
+                                {(skills as any[]).map((s: any) => (
+                                  <CommandItem
+                                    key={s.id}
+                                    value={s.name}
+                                    onSelect={() => setSelectedSkill(s.id)}
+                                  >
+                                    <Check className={cn("mr-2 h-4 w-4", selectedSkill === s.id ? "opacity-100" : "opacity-0")} />
+                                    {s.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <Label>Level</Label>
