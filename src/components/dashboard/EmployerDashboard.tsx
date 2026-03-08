@@ -21,7 +21,8 @@ const EmployerDashboard = () => {
   const queryClient = useQueryClient();
   const { notifications, unreadCount } = useNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "jobs";
+  const urlTab = searchParams.get("tab");
+  const activeTab = urlTab || sessionStorage.getItem("emp_dashboard_tab") || "jobs";
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const [rankingJobId, setRankingJobId] = useState<string | null>(null);
   const [ranking, setRanking] = useState(false);

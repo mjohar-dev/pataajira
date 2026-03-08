@@ -18,7 +18,8 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "analytics";
+  const urlTab = searchParams.get("tab");
+  const activeTab = urlTab || sessionStorage.getItem("admin_dashboard_tab") || "analytics";
 
   const { data: users = [] } = useQuery({
     queryKey: ["admin-users"],
