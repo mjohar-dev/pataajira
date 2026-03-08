@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUserSkills, useAllSkills } from "@/hooks/useProfile";
@@ -21,6 +22,11 @@ import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 
 const StudentDashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "profile";
+  const handleTabChange = useCallback((value: string) => {
+    setSearchParams({ tab: value }, { replace: false });
+  }, [setSearchParams]);
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const { profile, isLoading: profileLoading, updateProfile } = useProfile();
@@ -151,7 +157,7 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-none lg:flex">
           <TabsTrigger value="profile" className="gap-1"><User className="h-4 w-4" /> Profile</TabsTrigger>
           <TabsTrigger value="skills" className="gap-1"><BookOpen className="h-4 w-4" /> Skills</TabsTrigger>
