@@ -1,6 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Menu, X, Bell } from "lucide-react";
+import { Briefcase, Menu, X, Bell, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +9,9 @@ import { useNotifications } from "@/hooks/useJobs";
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
+  const isHome = location.pathname === "/";
   const { unreadCount } = useNotifications();
 
   const NAV_LINKS = [
@@ -21,14 +23,21 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <Briefcase className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="font-display text-xl font-bold text-foreground">
-            Pata<span className="text-primary">Ajira</span>
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {!isHome && (
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Briefcase className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="font-display text-xl font-bold text-foreground">
+              Pata<span className="text-primary">Ajira</span>
+            </span>
+          </Link>
+        </div>
 
         <div className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => (
