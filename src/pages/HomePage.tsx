@@ -188,7 +188,7 @@ const CTASection = () => (
           Ready to Launch Your Career?
         </h2>
         <p className="mx-auto mt-4 max-w-md text-primary-foreground/70">
-          Join thousands of Kenyan graduates already building their future with GradLink.
+          Join thousands of Kenyan graduates already building their future with PataAjira.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link to="/register">

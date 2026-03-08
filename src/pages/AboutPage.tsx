@@ -67,7 +67,7 @@ const AboutPage = () => (
       <div className="mx-auto max-w-lg">
         <GraduationCap className="mx-auto h-12 w-12 text-primary" />
         <h2 className="mt-4 font-display text-3xl font-bold text-foreground">Join the Movement</h2>
-        <p className="mt-3 text-muted-foreground">Whether you're a graduate looking for your first role or an employer seeking fresh talent, GradLink is for you.</p>
+        <p className="mt-3 text-muted-foreground">Whether you're a graduate looking for your first role or an employer seeking fresh talent, PataAjira is for you.</p>
         <div className="mt-6 flex justify-center gap-4">
           <Link to="/register"><Button size="lg">Get Started <ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
           <Link to="/jobs"><Button variant="outline" size="lg">Browse Jobs</Button></Link>

@@ -49,7 +49,7 @@ const Footer = () => (
       </div>
 
       <div className="mt-12 border-t border-background/10 pt-6 text-center text-sm text-background/40">
-        © {new Date().getFullYear()} GradLink Kenya. Built by Mohammed Johar. All rights reserved.
+        © {new Date().getFullYear()} PataAjira Kenya. Built by Mohammed Johar. All rights reserved.
       </div>
     </div>
   </footer>

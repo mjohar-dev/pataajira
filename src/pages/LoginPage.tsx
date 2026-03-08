@@ -41,7 +41,7 @@ const LoginPage = () => {
             <Briefcase className="h-6 w-6 text-primary-foreground" />
           </div>
           <h1 className="mt-4 font-display text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sign in to your GradLink account</p>
+          <p className="mt-1 text-sm text-muted-foreground">Sign in to your PataAjira account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 rounded-xl border border-border bg-card p-6 shadow-card space-y-5">
