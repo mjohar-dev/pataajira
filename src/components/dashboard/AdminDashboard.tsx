@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Users, Building2, Briefcase, BarChart3, TrendingUp, Activity } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
-import { useMemo } from "react";
+import { Users, Building2, Briefcase, BarChart3, TrendingUp, Activity, Shield } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
+import { useMemo, useState } from "react";
 
 const CHART_COLORS = ["hsl(145, 63%, 32%)", "hsl(30, 80%, 52%)", "hsl(0, 72%, 47%)", "hsl(220, 20%, 46%)", "hsl(200, 70%, 50%)"];
 
@@ -76,7 +77,19 @@ const AdminDashboard = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-jobs"] }); toast.success("Job removed"); },
   });
 
-  // Analytics data
+  const changeRole = useMutation({
+    mutationFn: async ({ targetUserId, role }: { targetUserId: string; role: string }) => {
+      const { data, error } = await supabase.functions.invoke("admin-manage", {
+        body: { action: "assign-role", targetUserId, role },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-users"] }); toast.success("Role updated!"); },
+    onError: (e: any) => toast.error(e.message || "Failed to update role"),
+  });
+
+  //
   const roleDistribution = useMemo(() => {
     const counts: Record<string, number> = {};
     users.forEach((u: any) => {
@@ -219,7 +232,7 @@ const AdminDashboard = () => {
 
         <TabsContent value="users">
           <Card>
-            <CardHeader><CardTitle>All Users ({users.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> All Users ({users.length})</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {users.map((u: any) => (
@@ -228,8 +241,20 @@ const AdminDashboard = () => {
                       <p className="font-medium">{u.first_name} {u.last_name}</p>
                       <p className="text-sm text-muted-foreground">{u.university_name || "N/A"} • Joined {new Date(u.created_at).toLocaleDateString()}</p>
                     </div>
-                    <div className="flex gap-2">
-                      {u.user_roles?.map((r: any) => <Badge key={r.role} variant="outline">{r.role}</Badge>)}
+                    <div className="flex items-center gap-2">
+                      <Select
+                        defaultValue={u.user_roles?.[0]?.role || "student"}
+                        onValueChange={(role) => changeRole.mutate({ targetUserId: u.user_id, role })}
+                      >
+                        <SelectTrigger className="w-[120px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="student">Student</SelectItem>
+                          <SelectItem value="employer">Employer</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <a href={`/profile/${u.user_id}`} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="sm">View</Button>
                       </a>
