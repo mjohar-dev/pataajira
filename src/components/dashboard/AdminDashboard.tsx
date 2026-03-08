@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Users, Building2, Briefcase, BarChart3, TrendingUp, Activity } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
-import { useMemo } from "react";
+import { Users, Building2, Briefcase, BarChart3, TrendingUp, Activity, Shield } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
+import { useMemo, useState } from "react";
 
 const CHART_COLORS = ["hsl(145, 63%, 32%)", "hsl(30, 80%, 52%)", "hsl(0, 72%, 47%)", "hsl(220, 20%, 46%)", "hsl(200, 70%, 50%)"];
 
