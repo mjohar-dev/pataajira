@@ -74,16 +74,20 @@
 
 ## 📸 Screenshots
 
-> Place your screenshots in the `/screenshots` folder.
+### Login Page
+![Login Page](./public/screenshots/login.png)
 
-| Page | Screenshot |
-|---|---|
-| Landing Page | ![Landing](./screenshots/landing.png) |
-| Job Listings | ![Jobs](./screenshots/jobs.png) |
-| AI Resume Optimizer | ![Resume](./screenshots/resume-optimizer.png) |
-| Admin Dashboard | ![Admin](./screenshots/admin-dashboard.png) |
-| Student Dashboard | ![Dashboard](./screenshots/student-dashboard.png) |
-| Public Profile | ![Profile](./screenshots/public-profile.png) |
+### Job Seeker Dashboard
+![Dashboard](./public/screenshots/dashboard.png)
+
+### Developer Profile
+![Developer Profile](./public/screenshots/developer_profile.png)
+
+### AI Resume Optimizer
+![AI Resume Optimizer](./public/screenshots/resume_optimizer.png)
+
+### Admin Dashboard
+![Admin Dashboard](./public/screenshots/admin_dashboard.png)
 
 ---
 
