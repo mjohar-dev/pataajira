@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 import {
   MapPin, GraduationCap, Github, Linkedin, Globe, Calendar,
   Code2, ExternalLink, Briefcase, Mail, Phone, Target,
@@ -30,6 +31,15 @@ const fadeUp = {
 
 const PublicProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
+
+  const handleResumeDownload = async (path: string) => {
+    const { data, error } = await supabase.storage.from("resumes").createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) {
+      toast.error("Could not generate resume link");
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
+  };
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["public-profile", userId],
@@ -190,9 +200,9 @@ const PublicProfilePage = () => {
                   </a>
                 )}
                 {profile.resume_url && (
-                  <a href={profile.resume_url} target="_blank" rel="noopener noreferrer">
-                    <Button variant="hero-outline" size="sm"><FileText className="h-4 w-4 mr-1.5" /> Resume</Button>
-                  </a>
+                  <Button variant="hero-outline" size="sm" onClick={() => handleResumeDownload(profile.resume_url!)}>
+                    <FileText className="h-4 w-4 mr-1.5" /> Resume
+                  </Button>
                 )}
               </div>
             </div>
@@ -428,11 +438,11 @@ const PublicProfilePage = () => {
                     </a>
                   )}
                   {profile.resume_url && (
-                    <a href={profile.resume_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-lg p-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    <button onClick={() => handleResumeDownload(profile.resume_url!)}
+                      className="flex items-center gap-3 rounded-lg p-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full">
                       <FileText className="h-4 w-4" /> Download Resume
                       <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-                    </a>
+                    </button>
                   )}
                   {!profile.github_url && !profile.linkedin_url && !profile.portfolio_url && !profile.resume_url && (
                     <p className="text-sm text-muted-foreground text-center py-2">No links added yet</p>
