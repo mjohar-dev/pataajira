@@ -17,6 +17,8 @@ const CHART_COLORS = ["hsl(145, 63%, 32%)", "hsl(30, 80%, 52%)", "hsl(0, 72%, 47
 const AdminDashboard = () => {
   const { signOut } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "analytics";
 
   const { data: users = [] } = useQuery({
     queryKey: ["admin-users"],
