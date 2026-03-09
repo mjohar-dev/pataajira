@@ -66,7 +66,7 @@ export const useSavedJobs = () => {
     mutationFn: async (jobId: string) => {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jobId);
       if (!isUuid) {
-        throw new Error("Only live jobs can be saved. Demo listings are not savable.");
+        throw new Error("This is a sample listing. Real employer jobs can be saved!");
       }
 
       const existing = savedJobs.find((s: any) => s.job_id === jobId);
