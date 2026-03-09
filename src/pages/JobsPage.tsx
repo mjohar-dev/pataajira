@@ -208,10 +208,19 @@ const JobsPage = () => {
 
           {/* Results */}
           <div className="flex-1">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{filtered.length}</span> jobs found
-              </p>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">{filtered.length}</span> jobs found
+                </p>
+                {externalJobs.length > 0 && (
+                  <Badge variant="outline" className="gap-1 text-xs">
+                    <Globe className="h-3 w-3" />
+                    Live from web
+                  </Badge>
+                )}
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
               {activeFilters > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {type !== "all" && (
