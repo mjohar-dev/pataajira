@@ -12,15 +12,20 @@ const typeLabels: Record<string, string> = {
   trainee: "Graduate Trainee",
   "entry-level": "Entry Level",
 };
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: dbJob, isLoading } = useJob(id || "");
+
+  const safeId = id && isUuid(id) ? id : "";
+  const { data: dbJob, isLoading: isLoadingDb } = useJob(safeId);
+  const { data: externalJob, isLoading: isLoadingExternal } = useExternalJob(safeId);
 
   // Fall back to mock data if no DB job found
   const mockJob = MOCK_JOBS.find((j) => j.id === id);
 
-  // Map DB job to display format
+  // Map job to display format
   const job = dbJob
     ? {
         id: dbJob.id,
@@ -43,6 +48,35 @@ const JobDetailPage = () => {
         remote: dbJob.remote || false,
         applicants: dbJob.applicant_count || 0,
         hasLogo: !!dbJob.employers?.company_logo_url,
+        isExternal: false,
+        applyUrl: null as string | null,
+        source: null as string | null,
+      }
+    : externalJob
+    ? {
+        id: externalJob.id,
+        title: externalJob.title,
+        company: externalJob.company,
+        companyLogo: externalJob.company_logo || externalJob.company?.[0] || "?",
+        companyDescription: null as string | null,
+        companyWebsite: null as string | null,
+        companyLocation: externalJob.location,
+        location: externalJob.location || "Remote",
+        type: (externalJob.type || "entry-level") as string,
+        industry: externalJob.industry || "Various",
+        skills: externalJob.skills || [],
+        salary: externalJob.salary || undefined,
+        description: externalJob.description || "",
+        requirements: externalJob.requirements || [],
+        responsibilities: externalJob.responsibilities || [],
+        deadline: externalJob.deadline || "",
+        postedDate: externalJob.posted_date || externalJob.fetched_at || new Date().toISOString(),
+        remote: externalJob.remote || false,
+        applicants: 0,
+        hasLogo: !!externalJob.company_logo && externalJob.company_logo.startsWith("http"),
+        isExternal: true,
+        applyUrl: externalJob.apply_url,
+        source: externalJob.source,
       }
     : mockJob
     ? {
@@ -51,8 +85,13 @@ const JobDetailPage = () => {
         companyWebsite: null as string | null,
         companyLocation: mockJob.location,
         hasLogo: false,
+        isExternal: false,
+        applyUrl: null as string | null,
+        source: null as string | null,
       }
     : null;
+
+  const isLoading = isLoadingDb || isLoadingExternal;
 
   if (isLoading) {
     return (
