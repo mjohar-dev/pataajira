@@ -1,14 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, RefreshCw, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import JobCard from "@/components/JobCard";
 import { MOCK_JOBS, LOCATIONS, INDUSTRIES } from "@/lib/mock-data";
 import type { Job } from "@/lib/mock-data";
 import { useJobs } from "@/hooks/useJobs";
+import { useExternalJobs, useFetchExternalJobs } from "@/hooks/useExternalJobs";
+import { toast } from "sonner";
 
 const JOB_TYPES = [
   { value: "all", label: "All Types" },
@@ -44,17 +46,32 @@ const JobsPage = () => {
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: dbJobs, isLoading } = useJobs({
+  const { data: dbJobs, isLoading: isLoadingDb } = useJobs({
     type: type !== "all" ? type : undefined,
     industry: industry !== "all" ? industry : undefined,
     location: location !== "all" ? location : undefined,
     search: search || undefined,
   });
 
+  const { data: externalJobs = [], isLoading: isLoadingExternal } = useExternalJobs();
+  const fetchExternal = useFetchExternalJobs();
+
+  // Auto-fetch external jobs on first load if none exist
+  useEffect(() => {
+    if (!isLoadingExternal && externalJobs.length === 0) {
+      fetchExternal.mutate();
+    }
+  }, [isLoadingExternal]);
+
   const allJobs = useMemo(() => {
     const liveJobs = (dbJobs || []).map(mapDbJobToMock);
-    return liveJobs.length > 0 ? liveJobs : MOCK_JOBS;
-  }, [dbJobs]);
+    // Prioritize: live employer jobs > external jobs > demo jobs
+    if (liveJobs.length > 0) return liveJobs;
+    if (externalJobs.length > 0) return externalJobs;
+    return MOCK_JOBS;
+  }, [dbJobs, externalJobs]);
+
+  const isLoading = isLoadingDb || isLoadingExternal || fetchExternal.isPending;
 
   const filtered = useMemo(() => {
     return allJobs.filter((job) => {
