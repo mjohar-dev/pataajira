@@ -160,7 +160,7 @@ const JobsPage = () => {
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Job Type</label>
-                <Select value={type} onValueChange={setType}>
+                <Select value={draftType} onValueChange={setDraftType}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {JOB_TYPES.map((t) => (
