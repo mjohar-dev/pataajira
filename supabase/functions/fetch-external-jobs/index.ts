@@ -20,18 +20,54 @@ interface ExternalJob {
   requirements?: string[];
   responsibilities?: string[];
   deadline?: string;
-  posted_date?: string;
+  posted_date?: string | number;
   remote?: boolean;
   apply_url?: string;
+}
+
+// Converts many formats (ISO strings, unix seconds/ms, numeric strings) to an ISO string.
+// Returns null when invalid/out-of-range so we can omit the field and let DB defaults apply.
+function toISODate(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+
+  // Numbers: treat as unix seconds (10 digits-ish) or ms (13 digits-ish)
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const ms = value < 2_000_000_000_000 ? value * 1000 : value;
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return null;
+    const y = d.getUTCFullYear();
+    if (y < 1970 || y > 2100) return null;
+    return d.toISOString();
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    // Numeric string => unix seconds/ms
+    if (/^\d{9,16}$/.test(trimmed)) {
+      const n = Number(trimmed);
+      if (!Number.isFinite(n)) return null;
+      return toISODate(n);
+    }
+
+    const d = new Date(trimmed);
+    if (Number.isNaN(d.getTime())) return null;
+    const y = d.getUTCFullYear();
+    if (y < 1970 || y > 2100) return null;
+    return d.toISOString();
+  }
+
+  return null;
 }
 
 // Scrape jobs from BrighterMonday Kenya using Firecrawl
 async function scrapeBrighterMonday(apiKey: string): Promise<ExternalJob[]> {
   const jobs: ExternalJob[] = [];
-  
+
   try {
     console.log('Scraping BrighterMonday Kenya...');
-    
+
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
@@ -46,24 +82,24 @@ async function scrapeBrighterMonday(apiKey: string): Promise<ExternalJob[]> {
     });
 
     const data = await response.json();
-    
+
     if (data.success && data.data?.markdown) {
       // Parse job listings from markdown
       const markdown = data.data.markdown;
       const links = data.data.links || [];
-      
+
       // Extract job patterns from markdown
-      const jobPatterns = markdown.split(/\n(?=###|\*\*[A-Z])/).filter((section: string) => 
+      const jobPatterns = markdown.split(/\n(?=###|\*\*[A-Z])/).filter((section: string) =>
         section.includes('KES') || section.includes('Trainee') || section.includes('Internship') || section.includes('Graduate')
       );
-      
+
       for (let i = 0; i < Math.min(jobPatterns.length, 10); i++) {
         const section = jobPatterns[i];
         const titleMatch = section.match(/(?:###\s*)?(?:\*\*)?([^*\n]+?)(?:\*\*)?(?:\n|$)/);
         const companyMatch = section.match(/(?:at|by|@)\s+([^|\n]+)/i) || section.match(/([A-Z][a-zA-Z\s&]+(?:Ltd|Limited|PLC|Inc|Company|Corp)?)/);
         const locationMatch = section.match(/(?:Nairobi|Mombasa|Kisumu|Nakuru|Eldoret|Kenya|Remote)/i);
         const salaryMatch = section.match(/KES\s*[\d,]+(?:\s*-\s*KES\s*[\d,]+)?/i);
-        
+
         if (titleMatch) {
           jobs.push({
             source: 'brightermonday',
@@ -71,8 +107,8 @@ async function scrapeBrighterMonday(apiKey: string): Promise<ExternalJob[]> {
             title: titleMatch[1].trim().substring(0, 100),
             company: companyMatch?.[1]?.trim() || 'Company in Kenya',
             location: locationMatch?.[0] || 'Nairobi',
-            type: section.toLowerCase().includes('intern') ? 'internship' : 
-                  section.toLowerCase().includes('trainee') ? 'trainee' : 'entry-level',
+            type: section.toLowerCase().includes('intern') ? 'internship' :
+              section.toLowerCase().includes('trainee') ? 'trainee' : 'entry-level',
             industry: 'Various',
             salary: salaryMatch?.[0],
             description: section.substring(0, 500),
@@ -85,26 +121,37 @@ async function scrapeBrighterMonday(apiKey: string): Promise<ExternalJob[]> {
   } catch (error) {
     console.error('BrighterMonday scrape error:', error);
   }
-  
+
   return jobs;
 }
 
 // Fetch jobs from RemoteOK API (free, no key needed)
 async function fetchRemoteOKJobs(): Promise<ExternalJob[]> {
   const jobs: ExternalJob[] = [];
-  
+
   try {
     console.log('Fetching from RemoteOK...');
-    
+
     const response = await fetch('https://remoteok.com/api?tag=junior', {
-      headers: { 'User-Agent': 'PataAjira/1.0' }
+      headers: {
+        'User-Agent': 'PataAjira/1.0',
+        'Accept': 'application/json',
+      }
     });
-    
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.toLowerCase().includes('application/json')) {
+      // consume body to avoid leaks
+      await response.text();
+      console.log('RemoteOK returned non-JSON response, skipping');
+      return [];
+    }
+
     const data = await response.json();
-    
+
     // RemoteOK returns array, first item is metadata
     const jobListings = data.slice(1, 11);
-    
+
     for (const job of jobListings) {
       if (job.position && job.company) {
         jobs.push({
@@ -117,41 +164,41 @@ async function fetchRemoteOKJobs(): Promise<ExternalJob[]> {
           type: 'entry-level',
           industry: 'Technology',
           skills: job.tags || [],
-          salary: job.salary_min && job.salary_max ? 
+          salary: job.salary_min && job.salary_max ?
             `$${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()}` : undefined,
           description: job.description?.substring(0, 1000),
           remote: true,
           apply_url: job.url,
-          posted_date: job.date
+          posted_date: job.date, // normalized later
         });
       }
     }
   } catch (error) {
     console.error('RemoteOK fetch error:', error);
   }
-  
+
   return jobs;
 }
 
 // Fetch from Arbeitnow API (free entry-level jobs)
 async function fetchArbeitnowJobs(): Promise<ExternalJob[]> {
   const jobs: ExternalJob[] = [];
-  
+
   try {
     console.log('Fetching from Arbeitnow...');
-    
+
     const response = await fetch('https://www.arbeitnow.com/api/job-board-api?page=1');
     const data = await response.json();
-    
+
     const entryLevelJobs = (data.data || [])
-      .filter((job: any) => 
+      .filter((job: any) =>
         job.title?.toLowerCase().includes('junior') ||
         job.title?.toLowerCase().includes('intern') ||
         job.title?.toLowerCase().includes('trainee') ||
         job.title?.toLowerCase().includes('entry')
       )
       .slice(0, 10);
-    
+
     for (const job of entryLevelJobs) {
       jobs.push({
         source: 'arbeitnow',
@@ -165,13 +212,13 @@ async function fetchArbeitnowJobs(): Promise<ExternalJob[]> {
         description: job.description?.substring(0, 1000),
         remote: job.remote || false,
         apply_url: job.url,
-        posted_date: job.created_at
+        posted_date: job.created_at, // normalized later
       });
     }
   } catch (error) {
     console.error('Arbeitnow fetch error:', error);
   }
-  
+
   return jobs;
 }
 
@@ -184,53 +231,62 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
+
     const allJobs: ExternalJob[] = [];
-    
+
     // Fetch from all sources in parallel
     const [brighterMondayJobs, remoteOKJobs, arbeitnowJobs] = await Promise.all([
       firecrawlKey ? scrapeBrighterMonday(firecrawlKey) : Promise.resolve([]),
       fetchRemoteOKJobs(),
       fetchArbeitnowJobs()
     ]);
-    
+
     allJobs.push(...brighterMondayJobs, ...remoteOKJobs, ...arbeitnowJobs);
-    
+
     console.log(`Fetched ${allJobs.length} jobs total`);
-    
+
     // Upsert jobs to database
     if (allJobs.length > 0) {
+      const rows = allJobs.map((job) => {
+        const postedDateIso = toISODate(job.posted_date);
+
+        // Build payload without invalid timestamps (avoid Postgres "out of range" errors)
+        const row: Record<string, unknown> = {
+          ...job,
+          fetched_at: new Date().toISOString(),
+          is_active: true,
+        };
+
+        if (postedDateIso) row.posted_date = postedDateIso;
+        else delete row.posted_date;
+
+        return row;
+      });
+
       const { error } = await supabase
         .from('external_jobs')
-        .upsert(
-          allJobs.map(job => ({
-            ...job,
-            fetched_at: new Date().toISOString(),
-            is_active: true
-          })),
-          { onConflict: 'source,source_id', ignoreDuplicates: false }
-        );
-      
+        .upsert(rows, { onConflict: 'source,source_id', ignoreDuplicates: false });
+
       if (error) {
         console.error('Database upsert error:', error);
         throw error;
       }
     }
-    
+
     // Mark old jobs as inactive (older than 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     await supabase
       .from('external_jobs')
       .update({ is_active: false })
       .lt('fetched_at', sevenDaysAgo.toISOString());
-    
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         fetched: allJobs.length,
         sources: {
           brightermonday: brighterMondayJobs.length,
