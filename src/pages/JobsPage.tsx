@@ -1,14 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, RefreshCw, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import JobCard from "@/components/JobCard";
 import { MOCK_JOBS, LOCATIONS, INDUSTRIES } from "@/lib/mock-data";
 import type { Job } from "@/lib/mock-data";
 import { useJobs } from "@/hooks/useJobs";
+import { useExternalJobs, useFetchExternalJobs } from "@/hooks/useExternalJobs";
+import { toast } from "sonner";
 
 const JOB_TYPES = [
   { value: "all", label: "All Types" },
@@ -44,17 +46,32 @@ const JobsPage = () => {
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: dbJobs, isLoading } = useJobs({
+  const { data: dbJobs, isLoading: isLoadingDb } = useJobs({
     type: type !== "all" ? type : undefined,
     industry: industry !== "all" ? industry : undefined,
     location: location !== "all" ? location : undefined,
     search: search || undefined,
   });
 
+  const { data: externalJobs = [], isLoading: isLoadingExternal } = useExternalJobs();
+  const fetchExternal = useFetchExternalJobs();
+
+  // Auto-fetch external jobs on first load if none exist
+  useEffect(() => {
+    if (!isLoadingExternal && externalJobs.length === 0) {
+      fetchExternal.mutate();
+    }
+  }, [isLoadingExternal]);
+
   const allJobs = useMemo(() => {
     const liveJobs = (dbJobs || []).map(mapDbJobToMock);
-    return liveJobs.length > 0 ? liveJobs : MOCK_JOBS;
-  }, [dbJobs]);
+    // Prioritize: live employer jobs > external jobs > demo jobs
+    if (liveJobs.length > 0) return liveJobs;
+    if (externalJobs.length > 0) return externalJobs;
+    return MOCK_JOBS;
+  }, [dbJobs, externalJobs]);
+
+  const isLoading = isLoadingDb || isLoadingExternal || fetchExternal.isPending;
 
   const filtered = useMemo(() => {
     return allJobs.filter((job) => {
@@ -83,9 +100,27 @@ const JobsPage = () => {
       {/* Header */}
       <div className="bg-hero-gradient text-primary-foreground">
         <div className="container py-12 md:py-16">
-          <h1 className="font-display text-3xl font-bold md:text-4xl">Find Your Opportunity</h1>
-          <p className="mt-2 text-primary-foreground/70">Browse internships, trainee programs, and entry-level jobs across Kenya</p>
-
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-bold md:text-4xl">Find Your Opportunity</h1>
+              <p className="mt-2 text-primary-foreground/70">Browse internships, trainee programs, and entry-level jobs across Kenya</p>
+            </div>
+            <Button
+              variant="hero-outline"
+              size="sm"
+              onClick={() => {
+                fetchExternal.mutate(undefined, {
+                  onSuccess: (data) => toast.success(`Fetched ${data?.fetched || 0} jobs from external sources`),
+                  onError: () => toast.error("Failed to fetch external jobs")
+                });
+              }}
+              disabled={fetchExternal.isPending}
+              className="hidden md:flex items-center gap-2"
+            >
+              {fetchExternal.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Refresh Jobs
+            </Button>
+          </div>
           <div className="mt-6 flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -173,10 +208,19 @@ const JobsPage = () => {
 
           {/* Results */}
           <div className="flex-1">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{filtered.length}</span> jobs found
-              </p>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">{filtered.length}</span> jobs found
+                </p>
+                {externalJobs.length > 0 && (
+                  <Badge variant="outline" className="gap-1 text-xs">
+                    <Globe className="h-3 w-3" />
+                    Live from web
+                  </Badge>
+                )}
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
               {activeFilters > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {type !== "all" && (
