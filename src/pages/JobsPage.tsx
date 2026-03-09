@@ -37,18 +37,28 @@ const mapDbJobToMock = (dbJob: any): Job => ({
 });
 
 const JobsPage = () => {
-  const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("all");
-  const [type, setType] = useState("all");
-  const [industry, setIndustry] = useState("all");
-  const [remoteOnly, setRemoteOnly] = useState(false);
+  // Draft (what the user is currently selecting)
+  const [searchInput, setSearchInput] = useState("");
+  const [draftLocation, setDraftLocation] = useState("all");
+  const [draftType, setDraftType] = useState("all");
+  const [draftIndustry, setDraftIndustry] = useState("all");
+  const [draftRemoteOnly, setDraftRemoteOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Applied (what actually drives results)
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: "",
+    location: "all",
+    type: "all",
+    industry: "all",
+    remoteOnly: false,
+  });
+
   const { data: dbJobs, isLoading: isLoadingDb } = useJobs({
-    type: type !== "all" ? type : undefined,
-    industry: industry !== "all" ? industry : undefined,
-    location: location !== "all" ? location : undefined,
-    search: search || undefined,
+    type: appliedFilters.type !== "all" ? appliedFilters.type : undefined,
+    industry: appliedFilters.industry !== "all" ? appliedFilters.industry : undefined,
+    location: appliedFilters.location !== "all" ? appliedFilters.location : undefined,
+    search: appliedFilters.search || undefined,
   });
 
   const allJobs = useMemo(() => {
@@ -60,24 +70,42 @@ const JobsPage = () => {
 
   const filtered = useMemo(() => {
     return allJobs.filter((job) => {
-      const q = search.toLowerCase();
-      const matchesSearch = !q || job.title.toLowerCase().includes(q) || job.company.toLowerCase().includes(q) || job.skills.some(s => s.toLowerCase().includes(q));
-      const matchesLocation = location === "all" || job.location === location;
-      const matchesType = type === "all" || job.type === type;
-      const matchesIndustry = industry === "all" || job.industry === industry;
-      const matchesRemote = !remoteOnly || job.remote;
+      const q = appliedFilters.search.toLowerCase();
+      const matchesSearch =
+        !q ||
+        job.title.toLowerCase().includes(q) ||
+        job.company.toLowerCase().includes(q) ||
+        job.skills.some((s) => s.toLowerCase().includes(q));
+      const matchesLocation = appliedFilters.location === "all" || job.location === appliedFilters.location;
+      const matchesType = appliedFilters.type === "all" || job.type === appliedFilters.type;
+      const matchesIndustry = appliedFilters.industry === "all" || job.industry === appliedFilters.industry;
+      const matchesRemote = !appliedFilters.remoteOnly || job.remote;
       return matchesSearch && matchesLocation && matchesType && matchesIndustry && matchesRemote;
     });
-  }, [search, location, type, industry, remoteOnly, allJobs]);
+  }, [appliedFilters, allJobs]);
 
-  const activeFilters = [location !== "all", type !== "all", industry !== "all", remoteOnly].filter(Boolean).length;
+  const activeFilters =
+    [appliedFilters.location !== "all", appliedFilters.type !== "all", appliedFilters.industry !== "all", appliedFilters.remoteOnly]
+      .filter(Boolean).length;
+
+  const applyFilters = () => {
+    setAppliedFilters({
+      search: searchInput.trim(),
+      location: draftLocation,
+      type: draftType,
+      industry: draftIndustry,
+      remoteOnly: draftRemoteOnly,
+    });
+    setShowFilters(false);
+  };
 
   const clearFilters = () => {
-    setSearch("");
-    setLocation("all");
-    setType("all");
-    setIndustry("all");
-    setRemoteOnly(false);
+    setSearchInput("");
+    setDraftLocation("all");
+    setDraftType("all");
+    setDraftIndustry("all");
+    setDraftRemoteOnly(false);
+    setAppliedFilters({ search: "", location: "all", type: "all", industry: "all", remoteOnly: false });
   };
 
   return (
