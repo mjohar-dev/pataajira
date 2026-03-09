@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { MOCK_JOBS } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Bookmark, Building2, Calendar, Clock, ExternalLink, Globe, Loader2, MapPin, Share2, Users } from "lucide-react";
+import { ArrowLeft, Bookmark, Calendar, Clock, ExternalLink, Globe, Loader2, MapPin, Share2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useJob } from "@/hooks/useJobs";
 import { useExternalJob } from "@/hooks/useExternalJobs";
