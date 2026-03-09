@@ -199,12 +199,21 @@ const JobsPage = () => {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={remoteOnly}
-                  onChange={(e) => setRemoteOnly(e.target.checked)}
+                  checked={draftRemoteOnly}
+                  onChange={(e) => setDraftRemoteOnly(e.target.checked)}
                   className="rounded border-border accent-primary"
                 />
                 <span className="text-sm text-foreground">Remote only</span>
               </label>
+
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <Button variant="outline" className="w-full" onClick={clearFilters}>
+                  Clear
+                </Button>
+                <Button variant="hero" className="w-full" onClick={applyFilters}>
+                  Apply Filters
+                </Button>
+              </div>
             </div>
           </aside>
 
