@@ -51,25 +51,12 @@ const JobsPage = () => {
     search: search || undefined,
   });
 
-  const { data: externalJobs = [], isLoading: isLoadingExternal } = useExternalJobs();
-  const fetchExternal = useFetchExternalJobs();
-
-  // Auto-fetch external jobs on first load if none exist
-  useEffect(() => {
-    if (!isLoadingExternal && externalJobs.length === 0) {
-      fetchExternal.mutate();
-    }
-  }, [isLoadingExternal]);
-
   const allJobs = useMemo(() => {
     const liveJobs = (dbJobs || []).map(mapDbJobToMock);
-    // Prioritize: live employer jobs > external jobs > demo jobs
-    if (liveJobs.length > 0) return liveJobs;
-    if (externalJobs.length > 0) return externalJobs;
-    return MOCK_JOBS;
-  }, [dbJobs, externalJobs]);
+    return liveJobs.length > 0 ? liveJobs : MOCK_JOBS;
+  }, [dbJobs]);
 
-  const isLoading = isLoadingDb || isLoadingExternal || fetchExternal.isPending;
+  const isLoading = isLoadingDb;
 
   const filtered = useMemo(() => {
     return allJobs.filter((job) => {
