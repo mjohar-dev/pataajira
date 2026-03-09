@@ -48,19 +48,24 @@ export const useExternalJobs = () => {
   return useQuery({
     queryKey: ["external-jobs"],
     queryFn: async () => {
-      // Using raw fetch to avoid type issues until types regenerate
-      const { data, error } = await supabase
-        .from("external_jobs" as any)
-        .select("*")
-        .eq("is_active", true)
-        .order("fetched_at", { ascending: false })
-        .limit(50);
+      // Use rpc or direct fetch to avoid type issues until types regenerate
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/external_jobs?is_active=eq.true&order=fetched_at.desc&limit=50`,
+        {
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        }
+      );
 
-      if (error) {
-        console.log("External jobs fetch error (table may not exist yet):", error.message);
+      if (!response.ok) {
+        console.log("External jobs fetch error:", response.status);
         return [];
       }
-      return ((data || []) as ExternalJob[]).map(mapExternalJobToJob);
+
+      const data = (await response.json()) as ExternalJob[];
+      return data.map(mapExternalJobToJob);
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
