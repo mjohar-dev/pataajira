@@ -1,16 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal, X, Loader2, RefreshCw, Globe } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import JobCard from "@/components/JobCard";
 import { MOCK_JOBS, LOCATIONS, INDUSTRIES } from "@/lib/mock-data";
 import type { Job } from "@/lib/mock-data";
 import { useJobs } from "@/hooks/useJobs";
-import { useExternalJobs, useFetchExternalJobs } from "@/hooks/useExternalJobs";
-import { toast } from "sonner";
 
 const JOB_TYPES = [
   { value: "all", label: "All Types" },
