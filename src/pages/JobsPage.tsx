@@ -185,7 +185,7 @@ const JobsPage = () => {
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Industry</label>
-                <Select value={industry} onValueChange={setIndustry}>
+                <Select value={draftIndustry} onValueChange={setDraftIndustry}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Industries</SelectItem>
