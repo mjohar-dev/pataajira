@@ -316,9 +316,17 @@ const JobDetailPage = () => {
               )}
             </div>
 
-            <Link to="/register" className="block">
-              <Button className="w-full" size="lg">Apply Now</Button>
-            </Link>
+            {job.isExternal && job.applyUrl ? (
+              <a href={job.applyUrl} target="_blank" rel="noopener noreferrer" className="block">
+                <Button className="w-full" size="lg">
+                  <ExternalLink className="h-4 w-4 mr-1" /> Apply on source
+                </Button>
+              </a>
+            ) : (
+              <Link to="/register" className="block">
+                <Button className="w-full" size="lg">Apply Now</Button>
+              </Link>
+            )}
           </motion.aside>
         </div>
       </div>
