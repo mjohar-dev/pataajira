@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Job } from "@/lib/mock-data";
 
-interface ExternalJob {
+export interface ExternalJob {
   id: string;
   source: string;
   source_id: string;
@@ -67,6 +67,34 @@ export const useExternalJobs = () => {
       const data = (await response.json()) as ExternalJob[];
       return data.map(mapExternalJobToJob);
     },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+export const useExternalJob = (id: string) => {
+  return useQuery({
+    queryKey: ["external-job", id],
+    queryFn: async () => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/external_jobs?id=eq.${id}&is_active=eq.true&limit=1`,
+        {
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.log("External job fetch error:", response.status);
+        return null;
+      }
+
+      const data = (await response.json()) as ExternalJob[];
+      return data[0] || null;
+    },
+    enabled: !!id,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
