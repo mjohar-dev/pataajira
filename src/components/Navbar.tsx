@@ -94,7 +94,7 @@ const Navbar = () => {
                 {user ? (
                   <>
                     <Link to="/dashboard" className="flex-1"><Button variant="outline" className="w-full" onClick={() => setMobileOpen(false)}>Dashboard</Button></Link>
-                    <Button variant="outline" className="flex-1" onClick={() => { signOut(); setMobileOpen(false); }}>Sign Out</Button>
+                    <Button variant="outline" className="flex-1" onClick={() => { signOut(); setMobileOpen(false); navigate("/"); }}>Sign Out</Button>
                   </>
                 ) : (
                   <>
