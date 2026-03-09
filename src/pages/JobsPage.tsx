@@ -181,12 +181,6 @@ const JobsPage = () => {
                 <p className="text-sm text-muted-foreground">
                   <span className="font-semibold text-foreground">{filtered.length}</span> jobs found
                 </p>
-                {externalJobs.length > 0 && (
-                  <Badge variant="outline" className="gap-1 text-xs" title="Jobs refresh automatically every hour">
-                    <Globe className="h-3 w-3" />
-                    Live from Kenya
-                  </Badge>
-                )}
                 {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               </div>
               {activeFilters > 0 && (
