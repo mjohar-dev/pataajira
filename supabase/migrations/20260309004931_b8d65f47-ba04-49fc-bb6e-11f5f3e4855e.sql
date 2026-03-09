@@ -1,0 +1,1 @@
+UPDATE external_jobs SET is_active = false WHERE is_active = true;
