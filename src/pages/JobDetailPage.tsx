@@ -146,7 +146,15 @@ const JobDetailPage = () => {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h1 className="font-display text-2xl font-bold text-foreground">{job.title}</h1>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="font-display text-2xl font-bold text-foreground">{job.title}</h1>
+                    {job.isExternal && (
+                      <Badge variant="outline" className="gap-1">
+                        <Globe className="h-3 w-3" />
+                        Live from web
+                      </Badge>
+                    )}
+                  </div>
                   <p className="mt-1 text-lg text-muted-foreground">{job.company}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {job.location}</span>
@@ -158,9 +166,17 @@ const JobDetailPage = () => {
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/register">
-                  <Button size="lg">Apply Now</Button>
-                </Link>
+                {job.isExternal && job.applyUrl ? (
+                  <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
+                    <Button size="lg">
+                      <ExternalLink className="h-4 w-4 mr-1" /> Apply on source
+                    </Button>
+                  </a>
+                ) : (
+                  <Link to="/register">
+                    <Button size="lg">Apply Now</Button>
+                  </Link>
+                )}
                 <Button variant="outline" size="lg"><Bookmark className="h-4 w-4 mr-1" /> Save</Button>
                 <Button variant="ghost" size="lg"><Share2 className="h-4 w-4 mr-1" /> Share</Button>
               </div>
