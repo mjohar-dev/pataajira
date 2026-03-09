@@ -109,6 +109,75 @@ export type Database = {
         }
         Relationships: []
       }
+      external_jobs: {
+        Row: {
+          apply_url: string | null
+          company: string
+          company_logo: string | null
+          deadline: string | null
+          description: string | null
+          fetched_at: string | null
+          id: string
+          industry: string | null
+          is_active: boolean | null
+          location: string | null
+          posted_date: string | null
+          remote: boolean | null
+          requirements: string[] | null
+          responsibilities: string[] | null
+          salary: string | null
+          skills: string[] | null
+          source: string
+          source_id: string | null
+          title: string
+          type: string | null
+        }
+        Insert: {
+          apply_url?: string | null
+          company: string
+          company_logo?: string | null
+          deadline?: string | null
+          description?: string | null
+          fetched_at?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          location?: string | null
+          posted_date?: string | null
+          remote?: boolean | null
+          requirements?: string[] | null
+          responsibilities?: string[] | null
+          salary?: string | null
+          skills?: string[] | null
+          source: string
+          source_id?: string | null
+          title: string
+          type?: string | null
+        }
+        Update: {
+          apply_url?: string | null
+          company?: string
+          company_logo?: string | null
+          deadline?: string | null
+          description?: string | null
+          fetched_at?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          location?: string | null
+          posted_date?: string | null
+          remote?: boolean | null
+          requirements?: string[] | null
+          responsibilities?: string[] | null
+          salary?: string | null
+          skills?: string[] | null
+          source?: string
+          source_id?: string | null
+          title?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           applicant_count: number | null
