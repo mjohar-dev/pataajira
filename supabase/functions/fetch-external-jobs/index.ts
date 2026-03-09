@@ -25,12 +25,10 @@ interface ExternalJob {
   apply_url?: string;
 }
 
-// Converts many formats (ISO strings, unix seconds/ms, numeric strings) to an ISO string.
-// Returns null when invalid/out-of-range so we can omit the field and let DB defaults apply.
+// Converts many formats to ISO string. Returns null when invalid.
 function toISODate(value: unknown): string | null {
   if (value === null || value === undefined) return null;
 
-  // Numbers: treat as unix seconds (10 digits-ish) or ms (13 digits-ish)
   if (typeof value === "number" && Number.isFinite(value)) {
     const ms = value < 2_000_000_000_000 ? value * 1000 : value;
     const d = new Date(ms);
@@ -43,14 +41,9 @@ function toISODate(value: unknown): string | null {
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return null;
-
-    // Numeric string => unix seconds/ms
     if (/^\d{9,16}$/.test(trimmed)) {
-      const n = Number(trimmed);
-      if (!Number.isFinite(n)) return null;
-      return toISODate(n);
+      return toISODate(Number(trimmed));
     }
-
     const d = new Date(trimmed);
     if (Number.isNaN(d.getTime())) return null;
     const y = d.getUTCFullYear();
@@ -62,11 +55,11 @@ function toISODate(value: unknown): string | null {
 }
 
 // Scrape jobs from BrighterMonday Kenya using Firecrawl
-async function scrapeBrighterMonday(apiKey: string): Promise<ExternalJob[]> {
+async function scrapeBrighterMondayGraduate(apiKey: string): Promise<ExternalJob[]> {
   const jobs: ExternalJob[] = [];
 
   try {
-    console.log('Scraping BrighterMonday Kenya...');
+    console.log('Scraping BrighterMonday Kenya (Graduate Trainee)...');
 
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
@@ -84,139 +77,225 @@ async function scrapeBrighterMonday(apiKey: string): Promise<ExternalJob[]> {
     const data = await response.json();
 
     if (data.success && data.data?.markdown) {
-      // Parse job listings from markdown
       const markdown = data.data.markdown;
       const links = data.data.links || [];
 
-      // Extract job patterns from markdown
-      const jobPatterns = markdown.split(/\n(?=###|\*\*[A-Z])/).filter((section: string) =>
-        section.includes('KES') || section.includes('Trainee') || section.includes('Internship') || section.includes('Graduate')
-      );
+      // Extract job listings - look for job title patterns
+      const lines = markdown.split('\n');
+      let currentJob: Partial<ExternalJob> | null = null;
 
-      for (let i = 0; i < Math.min(jobPatterns.length, 10); i++) {
-        const section = jobPatterns[i];
-        const titleMatch = section.match(/(?:###\s*)?(?:\*\*)?([^*\n]+?)(?:\*\*)?(?:\n|$)/);
-        const companyMatch = section.match(/(?:at|by|@)\s+([^|\n]+)/i) || section.match(/([A-Z][a-zA-Z\s&]+(?:Ltd|Limited|PLC|Inc|Company|Corp)?)/);
-        const locationMatch = section.match(/(?:Nairobi|Mombasa|Kisumu|Nakuru|Eldoret|Kenya|Remote)/i);
-        const salaryMatch = section.match(/KES\s*[\d,]+(?:\s*-\s*KES\s*[\d,]+)?/i);
+      for (const line of lines) {
+        // Skip navigation/UI elements
+        if (line.includes('Share link') || line.includes('Filter') || line.includes('Sort by')) continue;
 
+        // Look for job titles (usually in headers or bold)
+        const titleMatch = line.match(/^(?:###?\s*)?(?:\*\*)?([A-Z][^*\n]{5,80})(?:\*\*)?$/);
         if (titleMatch) {
-          jobs.push({
-            source: 'brightermonday',
-            source_id: `bm-${Date.now()}-${i}`,
-            title: titleMatch[1].trim().substring(0, 100),
-            company: companyMatch?.[1]?.trim() || 'Company in Kenya',
-            location: locationMatch?.[0] || 'Nairobi',
-            type: section.toLowerCase().includes('intern') ? 'internship' :
-              section.toLowerCase().includes('trainee') ? 'trainee' : 'entry-level',
-            industry: 'Various',
-            salary: salaryMatch?.[0],
-            description: section.substring(0, 500),
-            remote: section.toLowerCase().includes('remote'),
-            apply_url: links.find((l: string) => l.includes('brightermonday'))
-          });
+          const potentialTitle = titleMatch[1].trim();
+          // Filter out non-job titles
+          if (potentialTitle.includes('Trainee') || potentialTitle.includes('Intern') ||
+              potentialTitle.includes('Graduate') || potentialTitle.includes('Entry') ||
+              potentialTitle.includes('Junior') || potentialTitle.includes('Assistant')) {
+
+            if (currentJob?.title) {
+              jobs.push(currentJob as ExternalJob);
+            }
+
+            currentJob = {
+              source: 'brightermonday',
+              source_id: `bm-grad-${Date.now()}-${jobs.length}`,
+              title: potentialTitle.substring(0, 100),
+              company: 'Company in Kenya',
+              location: 'Nairobi',
+              type: potentialTitle.toLowerCase().includes('intern') ? 'internship' : 'trainee',
+              industry: 'Various',
+              remote: false,
+            };
+          }
+        }
+
+        // Extract company name
+        if (currentJob && !currentJob.company?.includes('Company')) {
+          const companyMatch = line.match(/(?:at|by|@)\s+([A-Z][a-zA-Z\s&]+(?:Ltd|Limited|PLC|Inc|Company|Corp|Kenya)?)/i);
+          if (companyMatch) {
+            currentJob.company = companyMatch[1].trim();
+          }
+        }
+
+        // Extract location
+        const locationMatch = line.match(/\b(Nairobi|Mombasa|Kisumu|Nakuru|Eldoret|Thika|Machakos|Nyeri|Kakamega|Kenya)\b/i);
+        if (currentJob && locationMatch) {
+          currentJob.location = locationMatch[1];
+        }
+
+        // Extract salary
+        const salaryMatch = line.match(/KES\s*[\d,]+(?:\s*-\s*KES\s*[\d,]+)?/i);
+        if (currentJob && salaryMatch) {
+          currentJob.salary = salaryMatch[0];
+        }
+      }
+
+      // Add last job if exists
+      if (currentJob?.title) {
+        jobs.push(currentJob as ExternalJob);
+      }
+
+      // Get apply URLs from links
+      const jobLinks = links.filter((l: string) => l.includes('/job/') || l.includes('/jobs/'));
+      jobs.forEach((job, i) => {
+        if (jobLinks[i]) {
+          job.apply_url = jobLinks[i];
+        }
+      });
+    }
+  } catch (error) {
+    console.error('BrighterMonday graduate scrape error:', error);
+  }
+
+  return jobs.slice(0, 15);
+}
+
+// Scrape BrighterMonday Internships
+async function scrapeBrighterMondayInternships(apiKey: string): Promise<ExternalJob[]> {
+  const jobs: ExternalJob[] = [];
+
+  try {
+    console.log('Scraping BrighterMonday Kenya (Internships)...');
+
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: 'https://www.brightermonday.co.ke/jobs/internships-volunteering',
+        formats: ['markdown', 'links'],
+        onlyMainContent: true,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.data?.markdown) {
+      const markdown = data.data.markdown;
+      const links = data.data.links || [];
+
+      const lines = markdown.split('\n');
+      let currentJob: Partial<ExternalJob> | null = null;
+
+      for (const line of lines) {
+        if (line.includes('Share link') || line.includes('Filter') || line.includes('Sort by')) continue;
+
+        const titleMatch = line.match(/^(?:###?\s*)?(?:\*\*)?([A-Z][^*\n]{5,80})(?:\*\*)?$/);
+        if (titleMatch) {
+          const potentialTitle = titleMatch[1].trim();
+          if (potentialTitle.includes('Intern') || potentialTitle.includes('Attachment') ||
+              potentialTitle.includes('Volunteer') || potentialTitle.includes('Graduate') ||
+              potentialTitle.includes('Trainee')) {
+
+            if (currentJob?.title) {
+              jobs.push(currentJob as ExternalJob);
+            }
+
+            currentJob = {
+              source: 'brightermonday',
+              source_id: `bm-intern-${Date.now()}-${jobs.length}`,
+              title: potentialTitle.substring(0, 100),
+              company: 'Company in Kenya',
+              location: 'Nairobi',
+              type: 'internship',
+              industry: 'Various',
+              remote: false,
+            };
+          }
+        }
+
+        const companyMatch = line.match(/(?:at|by|@)\s+([A-Z][a-zA-Z\s&]+(?:Ltd|Limited|PLC|Inc|Company|Corp|Kenya)?)/i);
+        if (currentJob && companyMatch) {
+          currentJob.company = companyMatch[1].trim();
+        }
+
+        const locationMatch = line.match(/\b(Nairobi|Mombasa|Kisumu|Nakuru|Eldoret|Thika|Machakos|Nyeri|Kakamega|Kenya)\b/i);
+        if (currentJob && locationMatch) {
+          currentJob.location = locationMatch[1];
+        }
+
+        const salaryMatch = line.match(/KES\s*[\d,]+(?:\s*-\s*KES\s*[\d,]+)?/i);
+        if (currentJob && salaryMatch) {
+          currentJob.salary = salaryMatch[0];
+        }
+      }
+
+      if (currentJob?.title) {
+        jobs.push(currentJob as ExternalJob);
+      }
+
+      const jobLinks = links.filter((l: string) => l.includes('/job/') || l.includes('/jobs/'));
+      jobs.forEach((job, i) => {
+        if (jobLinks[i]) {
+          job.apply_url = jobLinks[i];
+        }
+      });
+    }
+  } catch (error) {
+    console.error('BrighterMonday internships scrape error:', error);
+  }
+
+  return jobs.slice(0, 15);
+}
+
+// Search for Kenya jobs using Firecrawl search
+async function searchKenyaJobs(apiKey: string): Promise<ExternalJob[]> {
+  const jobs: ExternalJob[] = [];
+
+  try {
+    console.log('Searching for Kenya entry-level jobs...');
+
+    const response = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: 'graduate trainee internship jobs Kenya Nairobi 2026',
+        limit: 10,
+        lang: 'en',
+        country: 'KE',
+        tbs: 'qdr:w', // Last week
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.data) {
+      for (let i = 0; i < data.data.length; i++) {
+        const result = data.data[i];
+        if (result.title && result.url) {
+          // Filter for relevant job sites
+          if (result.url.includes('brightermonday') || result.url.includes('myjobmag') ||
+              result.url.includes('corporatestaffing') || result.url.includes('fuzu') ||
+              result.url.includes('linkedin.com/jobs')) {
+
+            jobs.push({
+              source: 'firecrawl-search',
+              source_id: `fcs-${Date.now()}-${i}`,
+              title: result.title.substring(0, 100),
+              company: 'Company in Kenya',
+              location: 'Kenya',
+              type: result.title.toLowerCase().includes('intern') ? 'internship' : 'entry-level',
+              industry: 'Various',
+              description: result.description?.substring(0, 500),
+              remote: false,
+              apply_url: result.url,
+            });
+          }
         }
       }
     }
   } catch (error) {
-    console.error('BrighterMonday scrape error:', error);
-  }
-
-  return jobs;
-}
-
-// Fetch jobs from RemoteOK API (free, no key needed)
-async function fetchRemoteOKJobs(): Promise<ExternalJob[]> {
-  const jobs: ExternalJob[] = [];
-
-  try {
-    console.log('Fetching from RemoteOK...');
-
-    const response = await fetch('https://remoteok.com/api?tag=junior', {
-      headers: {
-        'User-Agent': 'PataAjira/1.0',
-        'Accept': 'application/json',
-      }
-    });
-
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.toLowerCase().includes('application/json')) {
-      // consume body to avoid leaks
-      await response.text();
-      console.log('RemoteOK returned non-JSON response, skipping');
-      return [];
-    }
-
-    const data = await response.json();
-
-    // RemoteOK returns array, first item is metadata
-    const jobListings = data.slice(1, 11);
-
-    for (const job of jobListings) {
-      if (job.position && job.company) {
-        jobs.push({
-          source: 'remoteok',
-          source_id: `rok-${job.id || Date.now()}`,
-          title: job.position,
-          company: job.company,
-          company_logo: job.company_logo,
-          location: job.location || 'Remote',
-          type: 'entry-level',
-          industry: 'Technology',
-          skills: job.tags || [],
-          salary: job.salary_min && job.salary_max ?
-            `$${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()}` : undefined,
-          description: job.description?.substring(0, 1000),
-          remote: true,
-          apply_url: job.url,
-          posted_date: job.date, // normalized later
-        });
-      }
-    }
-  } catch (error) {
-    console.error('RemoteOK fetch error:', error);
-  }
-
-  return jobs;
-}
-
-// Fetch from Arbeitnow API (free entry-level jobs)
-async function fetchArbeitnowJobs(): Promise<ExternalJob[]> {
-  const jobs: ExternalJob[] = [];
-
-  try {
-    console.log('Fetching from Arbeitnow...');
-
-    const response = await fetch('https://www.arbeitnow.com/api/job-board-api?page=1');
-    const data = await response.json();
-
-    const entryLevelJobs = (data.data || [])
-      .filter((job: any) =>
-        job.title?.toLowerCase().includes('junior') ||
-        job.title?.toLowerCase().includes('intern') ||
-        job.title?.toLowerCase().includes('trainee') ||
-        job.title?.toLowerCase().includes('entry')
-      )
-      .slice(0, 10);
-
-    for (const job of entryLevelJobs) {
-      jobs.push({
-        source: 'arbeitnow',
-        source_id: `anow-${job.slug || Date.now()}`,
-        title: job.title,
-        company: job.company_name,
-        location: job.location || 'Remote',
-        type: job.title?.toLowerCase().includes('intern') ? 'internship' : 'entry-level',
-        industry: 'Technology',
-        skills: job.tags || [],
-        description: job.description?.substring(0, 1000),
-        remote: job.remote || false,
-        apply_url: job.url,
-        posted_date: job.created_at, // normalized later
-      });
-    }
-  } catch (error) {
-    console.error('Arbeitnow fetch error:', error);
+    console.error('Firecrawl search error:', error);
   }
 
   return jobs;
@@ -236,23 +315,30 @@ Deno.serve(async (req) => {
 
     const allJobs: ExternalJob[] = [];
 
-    // Fetch from all sources in parallel
-    const [brighterMondayJobs, remoteOKJobs, arbeitnowJobs] = await Promise.all([
-      firecrawlKey ? scrapeBrighterMonday(firecrawlKey) : Promise.resolve([]),
-      fetchRemoteOKJobs(),
-      fetchArbeitnowJobs()
+    if (!firecrawlKey) {
+      console.log('FIRECRAWL_API_KEY not configured, skipping external job fetch');
+      return new Response(
+        JSON.stringify({ success: true, fetched: 0, message: 'Firecrawl not configured' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Fetch from Kenya-focused sources in parallel
+    const [graduateJobs, internshipJobs, searchJobs] = await Promise.all([
+      scrapeBrighterMondayGraduate(firecrawlKey),
+      scrapeBrighterMondayInternships(firecrawlKey),
+      searchKenyaJobs(firecrawlKey),
     ]);
 
-    allJobs.push(...brighterMondayJobs, ...remoteOKJobs, ...arbeitnowJobs);
+    allJobs.push(...graduateJobs, ...internshipJobs, ...searchJobs);
 
-    console.log(`Fetched ${allJobs.length} jobs total`);
+    console.log(`Fetched ${allJobs.length} Kenya jobs total`);
 
     // Upsert jobs to database
     if (allJobs.length > 0) {
       const rows = allJobs.map((job) => {
         const postedDateIso = toISODate(job.posted_date);
 
-        // Build payload without invalid timestamps (avoid Postgres "out of range" errors)
         const row: Record<string, unknown> = {
           ...job,
           fetched_at: new Date().toISOString(),
@@ -289,9 +375,9 @@ Deno.serve(async (req) => {
         success: true,
         fetched: allJobs.length,
         sources: {
-          brightermonday: brighterMondayJobs.length,
-          remoteok: remoteOKJobs.length,
-          arbeitnow: arbeitnowJobs.length
+          brightermonday_graduate: graduateJobs.length,
+          brightermonday_internships: internshipJobs.length,
+          firecrawl_search: searchJobs.length,
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
