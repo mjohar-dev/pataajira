@@ -172,7 +172,7 @@ const JobsPage = () => {
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Location</label>
-                <Select value={location} onValueChange={setLocation}>
+                <Select value={draftLocation} onValueChange={setDraftLocation}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
