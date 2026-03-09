@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Job } from "@/lib/mock-data";
 
-interface ExternalJob {
+export interface ExternalJob {
   id: string;
   source: string;
   source_id: string;
