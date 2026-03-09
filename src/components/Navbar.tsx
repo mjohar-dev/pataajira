@@ -65,7 +65,7 @@ const Navbar = () => {
                 <Button variant="ghost" size="sm">Dashboard</Button>
                 {unreadCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">{unreadCount}</span>}
               </Link>
-              <Button variant="outline" size="sm" onClick={signOut}>Sign Out</Button>
+              <Button variant="outline" size="sm" onClick={() => { signOut(); navigate("/"); }}>Sign Out</Button>
             </>
           ) : (
             <>
@@ -94,7 +94,7 @@ const Navbar = () => {
                 {user ? (
                   <>
                     <Link to="/dashboard" className="flex-1"><Button variant="outline" className="w-full" onClick={() => setMobileOpen(false)}>Dashboard</Button></Link>
-                    <Button variant="outline" className="flex-1" onClick={() => { signOut(); setMobileOpen(false); }}>Sign Out</Button>
+                    <Button variant="outline" className="flex-1" onClick={() => { signOut(); setMobileOpen(false); navigate("/"); }}>Sign Out</Button>
                   </>
                 ) : (
                   <>
