@@ -228,16 +228,55 @@ const JobsPage = () => {
               </div>
               {activeFilters > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {type !== "all" && (
+                  {appliedFilters.type !== "all" && (
                     <Badge variant="secondary" className="gap-1 text-xs">
-                      {JOB_TYPES.find(t => t.value === type)?.label}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => setType("all")} />
+                      {JOB_TYPES.find((t) => t.value === appliedFilters.type)?.label}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => {
+                          setDraftType("all");
+                          setAppliedFilters((p) => ({ ...p, type: "all" }));
+                        }}
+                      />
                     </Badge>
                   )}
-                  {location !== "all" && (
+
+                  {appliedFilters.location !== "all" && (
                     <Badge variant="secondary" className="gap-1 text-xs">
-                      {location}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => setLocation("all")} />
+                      {appliedFilters.location}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => {
+                          setDraftLocation("all");
+                          setAppliedFilters((p) => ({ ...p, location: "all" }));
+                        }}
+                      />
+                    </Badge>
+                  )}
+
+                  {appliedFilters.industry !== "all" && (
+                    <Badge variant="secondary" className="gap-1 text-xs">
+                      {appliedFilters.industry}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => {
+                          setDraftIndustry("all");
+                          setAppliedFilters((p) => ({ ...p, industry: "all" }));
+                        }}
+                      />
+                    </Badge>
+                  )}
+
+                  {appliedFilters.remoteOnly && (
+                    <Badge variant="secondary" className="gap-1 text-xs">
+                      Remote only
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => {
+                          setDraftRemoteOnly(false);
+                          setAppliedFilters((p) => ({ ...p, remoteOnly: false }));
+                        }}
+                      />
                     </Badge>
                   )}
                 </div>
