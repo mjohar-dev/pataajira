@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Bookmark, Building2, Calendar, Clock, ExternalLink, Globe, Loader2, MapPin, Share2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useJob } from "@/hooks/useJobs";
+import { useExternalJob } from "@/hooks/useExternalJobs";
 
 const typeLabels: Record<string, string> = {
   internship: "Internship",
