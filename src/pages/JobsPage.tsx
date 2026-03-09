@@ -100,9 +100,27 @@ const JobsPage = () => {
       {/* Header */}
       <div className="bg-hero-gradient text-primary-foreground">
         <div className="container py-12 md:py-16">
-          <h1 className="font-display text-3xl font-bold md:text-4xl">Find Your Opportunity</h1>
-          <p className="mt-2 text-primary-foreground/70">Browse internships, trainee programs, and entry-level jobs across Kenya</p>
-
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-bold md:text-4xl">Find Your Opportunity</h1>
+              <p className="mt-2 text-primary-foreground/70">Browse internships, trainee programs, and entry-level jobs across Kenya</p>
+            </div>
+            <Button
+              variant="hero-outline"
+              size="sm"
+              onClick={() => {
+                fetchExternal.mutate(undefined, {
+                  onSuccess: (data) => toast.success(`Fetched ${data?.fetched || 0} jobs from external sources`),
+                  onError: () => toast.error("Failed to fetch external jobs")
+                });
+              }}
+              disabled={fetchExternal.isPending}
+              className="hidden md:flex items-center gap-2"
+            >
+              {fetchExternal.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Refresh Jobs
+            </Button>
+          </div>
           <div className="mt-6 flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
